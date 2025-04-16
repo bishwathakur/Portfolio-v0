@@ -1,0 +1,16 @@
+{
+	"education": [
+		{
+			"institution": "Indian Institute of Technology (Indian School of Mines), Dhanbad",
+			"degree": "B.Tech in Civil Engineering",
+			"gpa": "7.90/10.00",
+			"date": "2027",
+			"courses": [
+				"Data Structures & Algorithms",
+				"Mobile App Development",
+				"Web Development",
+				"Database Management Systems"
+			]
+		}
+	]
+}

@@ -1,0 +1,41 @@
+{
+	"projects": [
+		{
+			"title": "Bird Drone Classifier",
+			"description": "An AI-powered image classification system with mobile app integration",
+			"technologies": [
+				"Flask",
+				"Python",
+				"React Native",
+				"Firebase",
+				"Cloudinary"
+			],
+			"details": [
+				"Built a Flask backend for classifying 500+ images per hour, achieving 95% accuracy",
+				"Engineered a React Native app for real-time image uploads and instant classification results",
+				"Leveraged Cloudinary to handle image storage and optimization, cutting load times by 30%"
+			],
+			"github": "https://github.com/bishwathakur/SIH24",
+			"diagram": "+-------------------+\n|   React Native    |\n|     Frontend      |\n+---------+---------+\n          |\n          v\n+---------+---------+\n|     Flask API     |\n+---------+---------+\n          |\n          v\n+---------+---------+\n|  Image Classifier |\n+---------+---------+\n          |\n          v\n+---------+---------+\n|   Cloudinary CDN  |\n+-------------------+"
+		},
+		{
+			"title": "Event Hub",
+			"description": "A comprehensive event management Android application",
+			"technologies": [
+				"Kotlin",
+				"Android Studio",
+				"Firebase",
+				"Firestore",
+				"Firebase Functions",
+				"Glide"
+			],
+			"details": [
+				"Developed an event management app with user authentication, event creation, and friend invitations",
+				"Implemented Firebase Authentication, managing 1,000+ daily sign-ins securely",
+				"Optimized UI performance with RecyclerView and Glide, reducing image loading times by 40%"
+			],
+			"github": "https://github.com/bishwathakur/EventHub",
+			"diagram": "+-------------------+\n|     Android App   |\n+---------+---------+\n          |\n          v\n+---------+---------+\n|  Firebase Auth    |\n+---------+---------+\n          |\n          v\n+---------+---------+\n|   Firestore DB    |\n+---------+---------+\n          |\n          v\n+---------+---------+\n| Firebase Functions|\n+---------+---------+\n          |\n          v\n+---------+---------+\n|     Glide CDN     |\n+-------------------+"
+		}
+	]
+}

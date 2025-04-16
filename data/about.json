@@ -1,0 +1,28 @@
+{
+	"name": "Bishwa Thakur",
+	"title": "Software Developer",
+	"location": "Dhanbad, Jharkhand",
+	"education": "B.Tech in Civil Engineering, IIT (ISM) Dhanbad",
+	"specialty": "Mobile & Full Stack Development",
+	"certifications": "Flutter & React Native Development",
+	"bio": [
+		"Hello! I'm Bishwa Thakur, a software developer specializing in mobile and full-stack development.",
+		"With experience in Flutter and React Native development, I focus on creating efficient and scalable applications.",
+		"I'm passionate about solving complex problems and building user-friendly applications that make a real impact."
+	],
+	"personalBio": [
+		"I thrive on technical challenges and continuous learning in software development.",
+		"As a member of CYBERLABS and various technical societies at IIT (ISM) Dhanbad, I actively contribute to the tech community.",
+		"I balance my technical pursuits with creative outlets through Lights Camera ISM and Comedy Club.",
+		"My diverse interests in coding, filmmaking, and comedy help me bring unique perspectives to problem-solving."
+	],
+	"quickFacts": [
+		{ "label": "Location", "value": "Dhanbad, Jharkhand" },
+		{
+			"label": "Education",
+			"value": "B.Tech in Civil Engineering, IIT (ISM) Dhanbad"
+		},
+		{ "label": "Specialty", "value": "Mobile & Full Stack Development" },
+		{ "label": "Expected Graduation", "value": "2027" }
+	]
+}

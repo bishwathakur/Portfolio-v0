@@ -1,0 +1,27 @@
+{
+	"jobs": [
+		{
+			"title": "Flutter Developer",
+			"company": "Eventory Pvt. Ltd.",
+			"location": "Remote",
+			"period": "January 2025 - April 2025",
+			"responsibilities": [
+				"Built a Flutter venue onboarding platform with a multi-step form, boosting vendor registration efficiency by 40%",
+				"Implemented BLoC for scalable state management, created 10+ custom UI components, and ensured robust error handling",
+				"Integrated Google Places API with debounced search and Http, cutting latency by 25%",
+				"Integrated AWS S3 bucket for uploading forms, images, and PDFs, streamlining data storage and access"
+			]
+		},
+		{
+			"title": "Software Developer Intern",
+			"company": "Wisdomix Global Technologies Pvt. Ltd.",
+			"location": "Remote",
+			"period": "June 2024 - August 2024",
+			"responsibilities": [
+				"Refined 10+ UI components and 20+ pages in React Native, increasing app performance by 30%",
+				"Implemented 10+ scalable APIs in Django, reducing data processing time by 20%",
+				"Led code reviews and maintained version control with Git for a team of 4, ensuring 100% adherence to coding standards"
+			]
+		}
+	]
+}
