@@ -81,7 +81,7 @@ export default function Terminal({ onClose }: Props) {
 
     if (!input.trim()) return
 
-    const command = input.trim()
+    const command = input.trim().toLowerCase();
     let output: React.ReactNode
 
     // Process command
