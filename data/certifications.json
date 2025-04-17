@@ -1,14 +1,14 @@
 {
-	"certifications": [],
 	"competitions": [
 		"2nd Runner Up - WinterOfCode (WOC) 6.0",
 		"3rd Runner Up - Masterstack 3.0",
 		"CodeChef Rating: 1400+",
+		"CodeForces Rating: 1200+",
 		"2nd Runner Up - HackFest 2025"
 	],
-	"initiatives": [
+	"por": [
 		"Application Developer at CYBERLABS",
-		"Scripting Team and Videographer at Lights Camera ISM",
+		"Content Head at Lights Camera ISM",
 		"Club Member at Comedy Club, IIT (ISM) Dhanbad"
 	]
 }

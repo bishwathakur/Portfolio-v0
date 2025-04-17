@@ -10,12 +10,17 @@ export function SkillsSection() {
 
       <div className="space-y-6">
         {categories.map((category, index) => (
-          <div key={index}>
-            <h3 className="text-gray-900 font-bold mb-2 dark:text-gray-50">{category.name}</h3>
-            <div className="space-y-2">
-              {category.skills.map((skill, skillIndex) => (
-                <SkillBar key={skillIndex} name={skill.name} percentage={skill.percentage} />
-              ))}
+          <div key={index} className="p-3 border border-primary/20 rounded bg-primary/5">
+            <h3 className="text-white font-bold mb-2">{category.name}</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              {category.skills.map((skill, skillIndex) => {
+                // Convert percentage to stars (1-3)
+                let stars = 1
+                if (skill.percentage >= 85) stars = 3
+                else if (skill.percentage >= 75) stars = 2
+
+                return <SkillItem key={skillIndex} name={skill.name} stars={stars} />
+              })}
             </div>
           </div>
         ))}
@@ -24,24 +29,16 @@ export function SkillsSection() {
   )
 }
 
-function SkillBar({ name, percentage }: { name: string; percentage: number }) {
+function SkillItem({ name, stars }: { name: string; stars: number }) {
+  // Create star display with only filled stars
+  const starDisplay = "★".repeat(stars)
+
   return (
-    <div>
-      <div className="flex justify-between text-xs mb-1">
-        <span>{name}</span>
-        <span>{percentage}%</span>
-      </div>
-      <div className="h-2 bg-gray-100 rounded-full overflow-hidden dark:bg-gray-800">
-        <div
-          className="h-full bg-gray-900 rounded-full dark:bg-gray-50"
-          style={{ width: `${percentage}%` }}
-          role="progressbar"
-          aria-valuenow={percentage}
-          aria-valuemin={0}
-          aria-valuemax={100}
-          aria-label={`${name} skill level: ${percentage}%`}
-        />
-      </div>
+    <div className="flex items-center justify-between font-mono">
+      <span className="text-white">{name}</span>
+      <span className="text-green-400" style={{ textShadow: "0 0 5px rgba(74, 222, 128, 0.5)" }}>
+        {starDisplay}
+      </span>
     </div>
   )
 }

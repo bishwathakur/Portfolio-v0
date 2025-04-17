@@ -11,13 +11,9 @@ export function ResumeDownloadButton() {
   const handleDownload = () => {
     setIsDownloading(true)
 
-    // Convert Google Drive view URL to direct download URL
-    const fileId = "19m4HTrmnjEXgI_6Jz2Mljx7tcJkEFikV"
-    const directDownloadUrl = `https://drive.google.com/uc?export=download&id=${fileId}`
-
     // Create a link element
     const link = document.createElement("a")
-    link.href = directDownloadUrl
+    link.href = "/resume/bishwa-thakur-resume.pdf"
     link.download = "Bishwa-Thakur-Resume.pdf"
 
     // Append to the document

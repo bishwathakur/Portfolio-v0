@@ -49,8 +49,7 @@ export function ContactSection() {
             {contact.github}
           </a>
         </div>
-
-        <div className="mt-6 pt-4 border-t border-gray-900/20 dark:border-gray-50/20">
+        <div className="mt-6 pt-4 border-t border-primary/20">
           <div className="flex justify-center">
             <ResumeDownloadButton />
           </div>
