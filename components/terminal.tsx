@@ -2,7 +2,7 @@
 
 import type React from "react"
 import { useState, useEffect, useRef, useCallback } from "react"
-import { TerminalIcon, User, Briefcase, Code, Mail, GraduationCap, Award, Shield, FileDown } from "lucide-react"
+import { TerminalIcon, User, Briefcase, Code, Mail, GraduationCap, Award, Shield, FileDown, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { AboutSection } from "@/components/about-section"
 import { EducationSection } from "@/components/education-section"
@@ -76,12 +76,12 @@ export default function Terminal({ onClose }: Props) {
     scrollToBottom()
   }, [commandHistory, currentSection, scrollToBottom])
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent, directCommand?: string) => {
     e.preventDefault()
 
-    if (!input.trim()) return
+    const command = directCommand || input.trim().toLowerCase();
+    if (!command) return
 
-    const command = input.trim().toLowerCase();
     let output: React.ReactNode
 
     // Process command
@@ -367,6 +367,10 @@ export default function Terminal({ onClose }: Props) {
         setCommandHistory([])
         setCurrentSection(null)
         setInput("")
+        // Run welcome command after clearing
+        setTimeout(() => {
+          handleSubmit({ preventDefault: () => {} } as React.FormEvent, "welcome")
+        }, 100)
         return
 
       case command === "exit":
@@ -398,8 +402,10 @@ export default function Terminal({ onClose }: Props) {
       },
     ])
 
-    // Reset input and history index
-    setInput("")
+    // Reset input and history index only if not using direct command
+    if (!directCommand) {
+      setInput("")
+    }
     setHistoryIndex(-1)
   }
 
@@ -502,8 +508,7 @@ export default function Terminal({ onClose }: Props) {
             variant="outline"
             size="sm"
             onClick={() => {
-              setInput("about")
-              handleSubmit({ preventDefault: () => {} } as React.FormEvent)
+              handleSubmit({ preventDefault: () => {} } as React.FormEvent, "about")
             }}
             className="text-xs bg-black/50 hover:bg-black/70 text-white border-white/30"
           >
@@ -514,8 +519,7 @@ export default function Terminal({ onClose }: Props) {
             variant="outline"
             size="sm"
             onClick={() => {
-              setInput("education")
-              handleSubmit({ preventDefault: () => {} } as React.FormEvent)
+              handleSubmit({ preventDefault: () => {} } as React.FormEvent, "education")
             }}
             className="text-xs bg-black/50 hover:bg-black/70 text-white border-white/30"
           >
@@ -526,8 +530,7 @@ export default function Terminal({ onClose }: Props) {
             variant="outline"
             size="sm"
             onClick={() => {
-              setInput("skills")
-              handleSubmit({ preventDefault: () => {} } as React.FormEvent)
+              handleSubmit({ preventDefault: () => {} } as React.FormEvent, "skills")
             }}
             className="text-xs bg-black/50 hover:bg-black/70 text-white border-white/30"
           >
@@ -538,8 +541,7 @@ export default function Terminal({ onClose }: Props) {
             variant="outline"
             size="sm"
             onClick={() => {
-              setInput("experience")
-              handleSubmit({ preventDefault: () => {} } as React.FormEvent)
+              handleSubmit({ preventDefault: () => {} } as React.FormEvent, "experience")
             }}
             className="text-xs bg-black/50 hover:bg-black/70 text-white border-white/30"
           >
@@ -550,8 +552,7 @@ export default function Terminal({ onClose }: Props) {
             variant="outline"
             size="sm"
             onClick={() => {
-              setInput("projects")
-              handleSubmit({ preventDefault: () => {} } as React.FormEvent)
+              handleSubmit({ preventDefault: () => {} } as React.FormEvent, "projects")
             }}
             className="text-xs bg-black/50 hover:bg-black/70 text-white border-white/30"
           >
@@ -562,8 +563,7 @@ export default function Terminal({ onClose }: Props) {
             variant="outline"
             size="sm"
             onClick={() => {
-              setInput("certifications")
-              handleSubmit({ preventDefault: () => {} } as React.FormEvent)
+              handleSubmit({ preventDefault: () => {} } as React.FormEvent, "certifications")
             }}
             className="text-xs bg-black/50 hover:bg-black/70 text-white border-white/30"
           >
@@ -574,8 +574,7 @@ export default function Terminal({ onClose }: Props) {
             variant="outline"
             size="sm"
             onClick={() => {
-              setInput("contact")
-              handleSubmit({ preventDefault: () => {} } as React.FormEvent)
+              handleSubmit({ preventDefault: () => {} } as React.FormEvent, "contact")
             }}
             className="text-xs bg-black/50 hover:bg-black/70 text-white border-white/30"
           >
@@ -586,13 +585,23 @@ export default function Terminal({ onClose }: Props) {
             variant="outline"
             size="sm"
             onClick={() => {
-              setInput("resume")
-              handleSubmit({ preventDefault: () => {} } as React.FormEvent)
+              handleSubmit({ preventDefault: () => {} } as React.FormEvent, "resume")
             }}
             className="text-xs bg-black/50 hover:bg-black/70 text-white border-white/30"
           >
             <FileDown className="h-3 w-3 mr-1" />
             Resume
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              handleSubmit({ preventDefault: () => {} } as React.FormEvent, "clear")
+            }}
+            className="text-xs bg-black/50 hover:bg-black/70 text-white border-white/30"
+          >
+            <Trash2 className="h-3 w-3 mr-1" />
+            Clear
           </Button>
         </nav>
       </motion.div>

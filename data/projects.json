@@ -1,8 +1,28 @@
 {
 	"projects": [
 		{
+			"title": "AtomMail",
+			"description": "An intelligent email management system with AI-powered categorization and summarization",
+			"period": "October 2024 - December 2024",
+			"technologies": [
+				"Flutter",
+				"Flask",
+				"PostgreSQL",
+				"Gmail API",
+				"LangChain",
+				"REST APIs"
+			],
+			"details": [
+				"Built the frontend using Flutter to provide an intuitive and responsive email management interface",
+				"Integrated the Gmail API to retrieve emails and categorized them using LangChain and a PostgreSQL database",
+				"Developed a Flask backend leveraging LangChain for email summarization and generating replies using simple English prompts"
+			],
+			"github": "https://github.com/agnidhra-coder/atom-mail-hf"
+		},
+		{
 			"title": "Bird Drone Classifier",
 			"description": "An AI-powered image classification system with mobile app integration",
+			"period": "August 2024 - September 2024",
 			"technologies": [
 				"Flask",
 				"Python",
@@ -21,6 +41,7 @@
 		{
 			"title": "Event Hub",
 			"description": "A comprehensive event management Android application",
+			"period": "June 2024 - July 2024",
 			"technologies": [
 				"Kotlin",
 				"Android Studio",

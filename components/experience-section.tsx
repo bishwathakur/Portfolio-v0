@@ -1,6 +1,18 @@
 import { AsciiArt } from "@/components/ascii-art"
 import { data } from "@/lib/data"
 
+// Helper function to parse markdown-style bold text
+function parseMarkdown(text: string) {
+  const parts = text.split(/(\*\*.*?\*\*)/g)
+  return parts.map((part, index) => {
+    if (part.startsWith('**') && part.endsWith('**')) {
+      const boldText = part.slice(2, -2)
+      return <strong key={index} className="font-bold">{boldText}</strong>
+    }
+    return part
+  })
+}
+
 export function ExperienceSection() {
   const { jobs } = data.experience
 
@@ -20,7 +32,7 @@ export function ExperienceSection() {
             </div>
             <ul className="text-sm space-y-1 list-disc pl-4">
               {job.responsibilities.map((responsibility, respIndex) => (
-                <li key={respIndex}>{responsibility}</li>
+                <li key={respIndex}>{parseMarkdown(responsibility)}</li>
               ))}
             </ul>
           </div>

@@ -2,15 +2,21 @@
 	"education": [
 		{
 			"institution": "Indian Institute of Technology (Indian School of Mines), Dhanbad",
-			"degree": "B.Tech in Civil Engineering",
-			"gpa": "7.90/10.00",
-			"date": "2027",
-			"courses": [
-				"Data Structures & Algorithms",
-				"Mobile App Development",
-				"Web Development",
-				"Database Management Systems"
-			]
+			"degree": "B.Tech in Computer Science & Engineering",
+			"gpa": "7.63/10.00",
+			"date": "2027"
+		},
+		{
+			"institution": "Central Board of Secondary Education (CBSE)",
+			"degree": "12th Grade (Science Stream)",
+			"gpa": "95.2%",
+			"date": "2022"
+		},
+		{
+			"institution": "Central Board of Secondary Education (CBSE)",
+			"degree": "10th Grade",
+			"gpa": "96.8%",
+			"date": "2020"
 		}
 	]
 }

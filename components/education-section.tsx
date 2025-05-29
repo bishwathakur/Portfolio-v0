@@ -16,14 +16,6 @@ export function EducationSection() {
               {edu.degree} | GPA: {edu.gpa}
             </p>
             <p className="text-xs text-gray-500 dark:text-gray-400">{edu.date}</p>
-            <div className="mt-2">
-              <h4 className="text-sm font-semibold">Relevant Coursework:</h4>
-              <ul className="text-xs mt-1 space-y-1 list-disc pl-4">
-                {edu.courses.map((course, courseIndex) => (
-                  <li key={courseIndex}>{course}</li>
-                ))}
-              </ul>
-            </div>
           </div>
         ))}
       </div>
