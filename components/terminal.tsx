@@ -14,6 +14,7 @@ import { ContactSection } from "@/components/contact-section"
 import { ImageAsciiLogo } from "@/components/image-ascii-logo"
 import { ResumeDownloadButton } from "@/components/resume-download-button"
 import { motion, AnimatePresence } from "framer-motion"
+import { PlayVideo } from "./play-video"
 
 type Command = {
   input: string
@@ -254,6 +255,12 @@ export default function Terminal({ onClose }: Props) {
         output = <ContactSection />
         setCurrentSection("contact")
         break
+
+      case command === "helloyou":
+        // Special command to play a video
+        output = <PlayVideo videoId={"eS6RKPSm304"} startTime={12} />;
+        setCurrentSection(null);
+        break;
 
       case command === "resume":
         output = (
