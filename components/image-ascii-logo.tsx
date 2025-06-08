@@ -9,7 +9,11 @@ export function ImageAsciiLogo() {
     `$ pwd`,
     '/home/bishwathakur/portfolio//',
     `$ ls`,
-    'about  education  skills  experience  projects  certifications  contact //'
+    'about  education  skills  experience  projects  certifications  contact //',
+    `$ blog ls`,
+    'For getting the list of blogs//',
+    `$ blog <blog_name>`,
+    'For getting the blog content//',
   ]
 
   return (

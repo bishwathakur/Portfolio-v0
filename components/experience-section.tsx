@@ -7,7 +7,7 @@ function parseMarkdown(text: string) {
   return parts.map((part, index) => {
     if (part.startsWith('**') && part.endsWith('**')) {
       const boldText = part.slice(2, -2)
-      return <strong key={index} className="font-bold">{boldText}</strong>
+      return <strong key={index} className="font-bold text-[#00FF41]">{boldText}</strong>
     }
     return part
   })
