@@ -65,6 +65,18 @@ import { supabase } from '@/app/supabase/supabase'
 
 export async function POST(request: Request) {
   try {
+    // Get token from Authorization header
+    const authHeader = request.headers.get('Authorization')
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+    const accessToken = authHeader.split(' ')[1]
+  
+    // Verify token with Supabase
+    const { data: user } = await supabase.auth.getUser(accessToken)
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
     const body = await request.json()
     const { title, content, date, readTime, tags } = body
 
