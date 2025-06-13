@@ -153,6 +153,19 @@
   }
 }
 
+/* Add to your global CSS if needed for better cursor positioning */
+.terminal-input-container {
+  position: relative;
+}
+
+.terminal-cursor {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  font-family: inherit;
+}
+
 .cursor-blink {
   animation: blink 1s step-end infinite;
 }
