@@ -60,7 +60,23 @@ export default function Terminal({onClose}: Props) {
 		// Focus input on mount and when clicking anywhere in the terminal
 		inputRef.current?.focus();
 
-		const handleClick = () => {
+		const handleClick = (e: MouseEvent) => {
+			const target = e.target as Element;
+			const isMobile = window.innerWidth < 768;
+
+			// Check if clicking on mobile command elements
+			const isMobileCommandPanel =
+				target.closest("[data-mobile-commands]") ||
+				target.classList.contains("mobile-commands-backdrop") ||
+				target.closest("[data-mobile-toggle]");
+
+			// Don't focus input if:
+			// 1. On mobile and commands panel is open, OR
+			// 2. Clicking on mobile command related elements
+			if ((isMobile && showMobileCommands) || isMobileCommandPanel) {
+				return;
+			}
+
 			inputRef.current?.focus();
 		};
 
@@ -114,7 +130,7 @@ export default function Terminal({onClose}: Props) {
 		return () => {
 			document.removeEventListener("click", handleClick);
 		};
-	}, []);
+	}, [showMobileCommands]);
 
 	useEffect(() => {
 		scrollToBottom();
@@ -1478,6 +1494,7 @@ export default function Terminal({onClose}: Props) {
 				{/* Mobile Command Toggle Button - Only visible on mobile */}
 				<div className="block md:hidden mt-4 flex justify-center">
 					<button
+						data-mobile-toggle="true"
 						onClick={() =>
 							setShowMobileCommands(!showMobileCommands)
 						}
@@ -1517,12 +1534,13 @@ export default function Terminal({onClose}: Props) {
 								animate={{opacity: 1}}
 								exit={{opacity: 0}}
 								transition={{duration: 0.2}}
-								className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden"
+								className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden mobile-commands-backdrop"
 								onClick={() => setShowMobileCommands(false)}
 							/>
 
 							{/* Bottom Sheet Command Panel */}
 							<motion.div
+								data-mobile-commands="true"
 								initial={{opacity: 0, y: "100%"}}
 								animate={{opacity: 1, y: 0}}
 								exit={{opacity: 0, y: "100%"}}
