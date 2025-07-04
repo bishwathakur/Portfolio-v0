@@ -6,19 +6,19 @@
 	"specialty": "Mobile & Full Stack Development",
 	"certifications": "Flutter & React Native Development",
 	"bio": [
-		"Hello! I'm Bishwa Thakur, a software developer specializing in mobile and full-stack development.",
-		"With experience in Kotlin, Flutter and React Native development, I focus on creating efficient and scalable applications.",
-		"I'm passionate about solving complex problems and building user-friendly applications that make a real impact."
+		"Hey! I'm Bishwa Thakur, a software developer passionate about building mobile and full-stack applications.",
+		"I specialize in Kotlin, Flutter, and React Native, focusing on clean architecture, performance, and scalability.",
+		"I love solving meaningful problems and crafting user-friendly experiences that make a real difference."
 	],
 	"personalBio": [
-		"I'm a software developer driven by curiosity and a passion for solving real-world problems through technology.",
-		"As an active member of CYBERLABS and other tech societies at IIT (ISM) Dhanbad, I regularly contribute to collaborative development and innovation.",
-		"Outside of code, I explore creativity through filmmaking with Lights Camera ISM and share laughs as part of the Comedy Club.",
-		"With a unique blend of technical expertise and artistic expression, I bring fresh perspectives to every project I work on."
+		"I'm currently studying Civil Engineering at IIT (ISM) Dhanbad, but you'll mostly find me deep in code unless its a Race Weekend.",
+		"I'm part of CyberLabs and other tech clubs here — it’s where I get to collaborate, build, break things, and learn from the chaos.",
+		"Outside of all the tech stuff, I make short films with Lights Camera ISM, hit the gym regularly (lifting keeps me sane), and never go an hour without music.",
+		"Oh, and I’m a proper Formula 1 nerd — Sundays are for racing, not debugging.",
+		"I like mixing structure with creativity, which is probably why I enjoy both programming and storytelling. It helps me look at problems from more than one angle."
 	],
-
 	"quickFacts": [
-		{ "label": "Location", "value": "Lucknow, Uttar Pradesh" },
+		{ "label": "Location", "value": "Dhanbad, Jharkhand" },
 		{
 			"label": "Education",
 			"value": "B.Tech in Civil Engineering, IIT (ISM) Dhanbad"
