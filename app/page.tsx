@@ -27,7 +27,8 @@ export default function Home() {
 				className="fixed inset-0 bg-cover bg-center bg-no-repeat z-0"
 				style={{
 					backgroundImage:
-						"url(https://res.cloudinary.com/dmgwucocs/image/upload/v1744863466/wallpaper_twn0qt.webp)",
+						// "url(https://res.cloudinary.com/dmgwucocs/image/upload/v1744863466/wallpaper_twn0qt.webp)",
+						"url(https://res.cloudinary.com/dmgwucocs/image/upload/v1752266210/wallpaperflare.com_wallpaper_1_pztjr9.jpg)",
 					backgroundPosition: "center 40%",
 				}}
 				aria-hidden="true"
