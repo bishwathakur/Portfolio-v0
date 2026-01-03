@@ -13,6 +13,7 @@ import {
 	Shield,
 	FileDown,
 	Trash2,
+	ArrowRightLeft,
 } from "lucide-react";
 import {Button} from "@/components/ui/button";
 import {AboutSection} from "@/components/about-section";
@@ -1334,7 +1335,7 @@ export default function Terminal({onClose}: Props) {
 							onClick={() => handleTabAutocomplete(input)}
 							className="text-[#00FF41] border border-[#00FF41]/40 px-2 py-1 rounded hover:bg-[#00FF41]/10 block md:hidden"
 						>
-							⭾
+							<ArrowRightLeft className="h-4 w-4" />
 						</button>
 					</form>
 				</div>
