@@ -1,6 +1,14 @@
 {
 	"jobs": [
-		
+		{
+			"title": "Data Engineer Intern",
+			"company": "Flipkart",
+			"location": "Bengaluru",
+			"period": "May 2026 - Present",
+			"responsibilities":[
+				"Working as DE intern in the **Accounting Engineering team**"
+			]
+		},
 		{
 			"title": "Flutter and Firebase Developer",
 			"company": "Grepin",
