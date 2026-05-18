@@ -1,10 +1,19 @@
 {
 	"jobs": [
 		{
+			"title": "Data Engineer Intern",
+			"company": "Flipkart",
+			"location": "Bengaluru, Karnataka, India",
+			"period": "May 2026 - Present",
+			"responsibilities": [
+				"Working in the Accounting Engineering team as a DE intern",
+			]
+		},
+		{
 			"title": "Flutter and Firebase Developer",
 			"company": "Grepin",
 			"location": "Remote",
-			"period": "May 2025 - Present",
+			"period": "May 2025 - July 2025",
 			"responsibilities": [
 				"Integrated **Apple Sign-In** and **Firebase Auth**, cutting login friction by 40%",
 				"Streamlined image uploads via **Firebase Storage** and **FilePicker** for gym profile creation",
