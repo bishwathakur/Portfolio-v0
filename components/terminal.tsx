@@ -1,6 +1,7 @@
 "use client";
 
 import type React from "react";
+import {createPortal} from "react-dom";
 import {useState, useEffect, useRef, useCallback} from "react";
 import {
 	TerminalIcon,
@@ -47,6 +48,7 @@ export default function Terminal({onClose}: Props) {
 	const [isVisible, setIsVisible] = useState(true);
 	const [availableBlogSlugs, setAvailableBlogSlugs] = useState<string[]>([]);
 	const [showMobileCommands, setShowMobileCommands] = useState(false);
+	const [mobileSheetStyle, setMobileSheetStyle] = useState<React.CSSProperties>({});
 	const inputRef = useRef<HTMLInputElement>(null);
 	const terminalRef = useRef<HTMLDivElement>(null);
 
@@ -69,6 +71,38 @@ export default function Terminal({onClose}: Props) {
 		document.addEventListener("click", focusDesktopInput);
 		return () => document.removeEventListener("click", focusDesktopInput);
 	}, []);
+
+	useEffect(() => {
+		if (!showMobileCommands) return;
+		const viewport = window.visualViewport;
+		if (!viewport) return;
+
+		const updatePosition = () => {
+			setMobileSheetStyle({
+				bottom: Math.max(0, window.innerHeight - viewport.height - viewport.offsetTop),
+				maxHeight: viewport.height * 0.7,
+			});
+		};
+
+		updatePosition();
+		viewport.addEventListener("resize", updatePosition);
+		viewport.addEventListener("scroll", updatePosition);
+		window.addEventListener("resize", updatePosition);
+		return () => {
+			viewport.removeEventListener("resize", updatePosition);
+			viewport.removeEventListener("scroll", updatePosition);
+			window.removeEventListener("resize", updatePosition);
+		};
+	}, [showMobileCommands]);
+
+	const toggleMobileCommands = () => {
+		if (showMobileCommands) {
+			setShowMobileCommands(false);
+			return;
+		}
+		inputRef.current?.blur();
+		setShowMobileCommands(true);
+	};
 
 	useEffect(() => {
 
@@ -1482,10 +1516,11 @@ export default function Terminal({onClose}: Props) {
 				{/* Mobile Command Toggle Button - Only visible on mobile */}
 				<div className="block md:hidden mt-4 flex justify-center">
 					<button
+						type="button"
 						data-mobile-toggle="true"
-						onClick={() =>
-							setShowMobileCommands(!showMobileCommands)
-						}
+						aria-expanded={showMobileCommands}
+						aria-controls="mobile-command-sheet"
+						onClick={toggleMobileCommands}
 						className="relative text-xs bg-gradient-to-br from-[#1a2e1a]/80 via-black/70 to-[#0f1f0f]/80 hover:from-[#16213e]/90 hover:via-black/80 hover:to-[#1a2e1a]/90 text-white/90 hover:text-white border border-green-400/20 hover:border-[#00FF41]/50 px-5 py-2.5 rounded-md font-mono transition-all duration-300 hover:text-[#00FF41] group shadow-lg hover:shadow-xl hover:shadow-[#00FF41]/15 backdrop-blur-sm overflow-hidden"
 					>
 						<div className="flex items-center space-x-2 relative z-10">
@@ -1513,7 +1548,8 @@ export default function Terminal({onClose}: Props) {
 					</button>
 				</div>
 				{/* Mobile Command Panel Overlay - Bottom Sheet Style */}
-				<AnimatePresence>
+				{typeof document !== "undefined" && createPortal(
+<AnimatePresence>
 					{showMobileCommands && (
 						<>
 							{/* Backdrop */}
@@ -1529,6 +1565,8 @@ export default function Terminal({onClose}: Props) {
 							{/* Bottom Sheet Command Panel */}
 							<motion.div
 								data-mobile-commands="true"
+								id="mobile-command-sheet"
+								style={mobileSheetStyle}
 								initial={{opacity: 0, y: "100%"}}
 								animate={{opacity: 1, y: 0}}
 								exit={{opacity: 0, y: "100%"}}
@@ -1538,7 +1576,7 @@ export default function Terminal({onClose}: Props) {
 									damping: 25,
 									stiffness: 300,
 								}}
-								className="fixed inset-x-0 bottom-0 bg-black/95 border-t border-[#00FF41]/30 rounded-t-3xl shadow-2xl shadow-[#00FF41]/20 z-50 md:hidden max-h-[70vh] overflow-y-auto"
+								className="fixed inset-x-0 bottom-0 bg-black/95 border-t border-[#00FF41]/30 rounded-t-3xl shadow-2xl shadow-[#00FF41]/20 z-50 md:hidden max-h-[70vh] overflow-y-auto overscroll-contain"
 							>
 								{/* Panel Content */}
 								<div className="p-6 space-y-6 pb-8">
@@ -1785,7 +1823,9 @@ export default function Terminal({onClose}: Props) {
 							</motion.div>
 						</>
 					)}
-				</AnimatePresence>
+				</AnimatePresence>,
+					document.body
+				)}
 			</motion.div>
 		</AnimatePresence>
 	);
