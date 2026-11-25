@@ -241,3 +241,22 @@
     left: 200%;
   }
 }
+
+
+.portfolio-screen {
+  min-height: 100vh;
+}
+
+.portfolio-window {
+  height: 100vh;
+}
+
+@media (max-width: 767px) {
+  .portfolio-screen {
+    min-height: 100dvh;
+  }
+
+  .portfolio-window {
+    height: var(--terminal-viewport-height, 100dvh);
+  }
+}

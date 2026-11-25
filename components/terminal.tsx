@@ -633,7 +633,7 @@ export default function Terminal({onClose}: Props) {
 							{
 								input: command,
 								output: (
-									<div className="text-[#00FF41] grid grid-cols-3 gap-2">
+									<div className="grid grid-cols-1 gap-2 text-[#00FF41] md:grid-cols-3">
 										{slugs.length > 0 ? (
 											slugs.map((slug: string) => (
 												<span
@@ -1141,7 +1141,7 @@ export default function Terminal({onClose}: Props) {
 				const output = (
 					<div className="text-[#00FF41]">
 						<p className="mb-2">Available completions:</p>
-						<div className="grid grid-cols-3 gap-2 ml-4">
+						<div className="grid grid-cols-1 gap-2 [overflow-wrap:anywhere] md:ml-4 md:grid-cols-3">
 							{matches.map(slug => (
 								<span
 									key={slug}
@@ -1197,7 +1197,7 @@ export default function Terminal({onClose}: Props) {
 			const output = (
 				<div className="text-[#00FF41]">
 					<p className="mb-2">Available commands:</p>
-					<div className="grid grid-cols-4 gap-2 ml-4">
+					<div className="grid grid-cols-2 gap-x-3 gap-y-2 [overflow-wrap:anywhere] md:ml-4 md:grid-cols-4">
 						{matches.map(cmd => (
 							<span
 								key={cmd}
@@ -1284,52 +1284,65 @@ export default function Terminal({onClose}: Props) {
 				exit={{scale: 0.9, opacity: 0}}
 				transition={{duration: 0.2}}
 			>
-				<div className="bg-black border border-gray-200 border-white/30 rounded-t-md p-2 flex items-center justify-between dark:border-gray-800">
-					<div className="flex items-center">
-						<TerminalIcon className="h-4 w-4 text-white mr-2" />
-						<span className="text-sm font-mono text-white">
+				<div className="bg-black border border-gray-200 border-white/30 rounded-t-md p-2 flex shrink-0 items-center justify-between gap-2 dark:border-gray-800">
+					<div className="flex min-w-0 items-center">
+						<TerminalIcon className="h-4 w-4 shrink-0 text-white mr-2" />
+						<span className="truncate text-xs md:text-sm font-mono text-white">
 							bishwa@portfolio ~{" "}
 							{currentSection ? `/${currentSection}` : ""}
 						</span>
 					</div>
-					<Button
-						variant="ghost"
-						size="icon"
-						onClick={onClose}
-						className="h-6 w-6 hover:bg-white/10"
-					>
-						<span className="text-white text-lg">&times;</span>
-					</Button>
+					<div className="flex shrink-0 items-center gap-1.5">
+						<button
+							type="button"
+							data-mobile-toggle="true"
+							aria-expanded={showMobileCommands}
+							aria-controls={showMobileCommands ? "mobile-command-sheet" : undefined}
+							onClick={toggleMobileCommands}
+							className="inline-flex min-h-11 items-center gap-1.5 whitespace-nowrap rounded border border-[#00FF41]/40 bg-[#00FF41]/10 px-2.5 font-mono text-xs text-[#00FF41] md:hidden"
+						>
+							<span aria-hidden="true">⌘</span>
+							Commands
+						</button>
+						<Button
+							variant="ghost"
+							size="icon"
+							aria-label="Close terminal"
+							onClick={onClose}
+							className="h-11 w-8 hover:bg-white/10 md:h-6 md:w-6"
+						>
+							<span className="text-white text-lg">&times;</span>
+						</Button>
+					</div>
 				</div>
 				<div
 					ref={terminalRef}
-					className="flex-1 bg-black border-x border-white/30 p-4 overflow-y-auto font-mono text-sm"
+					className="min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-contain border-x border-white/30 bg-black p-2 font-mono text-sm [overflow-wrap:anywhere] [&_pre]:overflow-x-auto md:p-4"
 				>
 					{commandHistory.map((cmd, index) => (
 						<div key={index} className="mb-4">
-							<div className="flex items-center text-white/70">
-								<span className="text-white mr-2">$</span>
-								<span>{cmd.input}</span>
+							<div className="flex items-start text-white/70">
+								<span className="mr-2 shrink-0 text-white">$</span>
+								<span className="min-w-0">{cmd.input}</span>
 							</div>
-							<div className="mt-1 ml-4">{cmd.output}</div>
+							<div className="mt-1 min-w-0 md:ml-4">{cmd.output}</div>
 						</div>
 					))}
 				</div>
-				<div className="bg-black border border-gray-200 border-white/30 rounded-b-md p-2 dark:border-gray-800">
-					<form onSubmit={handleSubmit} className="flex items-center">
-						<span className="text-white mr-2">$</span>
-						<div className="flex-1 relative">
+				<div className="bg-black border border-gray-200 border-white/30 shrink-0 rounded-b-md p-2 dark:border-gray-800">
+					<form onSubmit={handleSubmit} className="flex min-w-0 items-center gap-2">
+						<span aria-hidden="true" className="shrink-0 text-white">$</span>
+						<div className="relative min-w-0 flex-1 overflow-hidden">
 							<input
 								ref={inputRef}
 								type="text"
 								value={input}
 								onChange={e => setInput(e.target.value)}
 								onKeyDown={handleKeyDown}
-								className="w-full bg-transparent border-none outline-none font-mono text-white caret-transparent"
+								className="min-h-11 w-full border-none bg-transparent font-mono text-base text-white caret-[#00FF41] outline-none md:min-h-0 md:caret-transparent"
 								aria-label="Terminal input"
 								autoComplete="off"
 								spellCheck="false"
-								style={{caretColor: "transparent"}}
 							/>
 							{/* Custom blinking cursor */}
 							<motion.span
@@ -1339,7 +1352,8 @@ export default function Terminal({onClose}: Props) {
 									duration: 1.2,
 									ease: "easeInOut",
 								}}
-								className="absolute text-[#00FF41] pointer-events-none"
+								aria-hidden="true"
+								className="pointer-events-none absolute hidden text-[#00FF41] md:inline"
 								style={{
 									left: `${input.length * 0.6}em`,
 									top: "50%",
@@ -1353,8 +1367,9 @@ export default function Terminal({onClose}: Props) {
 							type="button"
 							aria-label="Autocomplete command"
 							title="Tab"
+							onMouseDown={event => event.preventDefault()}
 							onClick={() => handleTabAutocomplete(input)}
-							className="text-[#00FF41] border border-[#00FF41]/40 px-2 py-1 rounded hover:bg-[#00FF41]/10 block md:hidden"
+							className="grid size-11 shrink-0 place-items-center rounded border border-[#00FF41]/40 text-[#00FF41] hover:bg-[#00FF41]/10 md:hidden"
 						>
 							<TabKeyIcon className="h-5 w-5" />
 						</button>
@@ -1513,40 +1528,6 @@ export default function Terminal({onClose}: Props) {
 						Clear
 					</Button>
 				</nav>
-				{/* Mobile Command Toggle Button - Only visible on mobile */}
-				<div className="block md:hidden mt-4 flex justify-center">
-					<button
-						type="button"
-						data-mobile-toggle="true"
-						aria-expanded={showMobileCommands}
-						aria-controls="mobile-command-sheet"
-						onClick={toggleMobileCommands}
-						className="relative text-xs bg-gradient-to-br from-[#1a2e1a]/80 via-black/70 to-[#0f1f0f]/80 hover:from-[#16213e]/90 hover:via-black/80 hover:to-[#1a2e1a]/90 text-white/90 hover:text-white border border-green-400/20 hover:border-[#00FF41]/50 px-5 py-2.5 rounded-md font-mono transition-all duration-300 hover:text-[#00FF41] group shadow-lg hover:shadow-xl hover:shadow-[#00FF41]/15 backdrop-blur-sm overflow-hidden"
-					>
-						<div className="flex items-center space-x-2 relative z-10">
-							{showMobileCommands ? (
-								<>
-									<span className="text-red-400 group-hover:text-red-300">
-										×
-									</span>
-									<span>Hide Commands</span>
-								</>
-							) : (
-								<>
-									<span className="text-green-300/60 group-hover:text-[#00FF41] transition-colors duration-300">
-										⌘
-									</span>
-									<span className="group-hover:text-[#00FF41] transition-colors duration-300">
-										Commands
-									</span>
-								</>
-							)}
-						</div>
-
-						{/* Soft green shimmer effect */}
-						<div className="absolute inset-0 bg-gradient-to-r from-transparent via-green-500/8 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
-					</button>
-				</div>
 				{/* Mobile Command Panel Overlay - Bottom Sheet Style */}
 				{typeof document !== "undefined" && createPortal(
 <AnimatePresence>
