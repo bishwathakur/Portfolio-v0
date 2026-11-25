@@ -1,4 +1,5 @@
 import { X } from "lucide-react";
+import { TerminalShortcutButton } from "./terminal-shortcut-button";
 import { ImageAsciiLogo } from "./image-ascii-logo";
 
 const portfolioItems = [
@@ -16,15 +17,15 @@ function CommandLink({command, onRun, showPrompt = false}: {
 	showPrompt?: boolean;
 }) {
 	return (
-		<button
-			type="button"
+		<TerminalShortcutButton
+			touch
 			data-command={command}
 			onClick={() => onRun(command)}
-			className="terminal-mobile-key inline-flex min-h-11 min-w-0 items-center gap-2 whitespace-nowrap px-2.5 text-left text-[#00FF41]"
+			className="text-left"
 		>
 			{showPrompt && <span aria-hidden="true" className="text-[#00FF41]/65">$</span>}
 			<code>{command}</code>
-		</button>
+		</TerminalShortcutButton>
 	);
 }
 

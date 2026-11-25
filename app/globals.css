@@ -298,29 +298,3 @@
     transition: none;
   }
 }
-
-/* A terminal key, not a content card: one clear edge and a simple press state. */
-.terminal-mobile-key {
-  border: 1px solid #397a49;
-  border-radius: 3px;
-  background-color: #07110a;
-  touch-action: manipulation;
-  cursor: pointer;
-}
-
-.terminal-mobile-key:focus-visible {
-  outline: 2px solid #00ff41;
-  outline-offset: 2px;
-}
-
-.terminal-mobile-key:active,
-.terminal-mobile-key[aria-expanded="true"] {
-  border-color: #00ff41;
-  background-color: #16351d;
-}
-
-@media (hover: hover) {
-  .terminal-mobile-key:hover {
-    border-color: #00ff41;
-  }
-}

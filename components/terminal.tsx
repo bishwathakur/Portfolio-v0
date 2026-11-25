@@ -16,6 +16,7 @@ import {
 	Trash2,
 } from "lucide-react";
 import {Button} from "@/components/ui/button";
+import {TerminalShortcutButton} from "./terminal-shortcut-button";
 import {AboutSection} from "@/components/about-section";
 import {EducationSection} from "@/components/education-section";
 import {SkillsSection} from "@/components/skills-section";
@@ -1236,17 +1237,17 @@ export default function Terminal({onClose}: Props) {
 						</span>
 					</div>
 					<div className="flex shrink-0 items-center gap-1.5">
-						<button
-							type="button"
+						<TerminalShortcutButton
+							touch
 							data-mobile-toggle="true"
 							aria-expanded={showMobileCommands}
 							aria-controls={showMobileCommands ? "mobile-command-sheet" : undefined}
 							onClick={toggleMobileCommands}
-							className="terminal-mobile-key inline-flex min-h-11 items-center gap-1.5 whitespace-nowrap px-2.5 font-mono text-xs text-[#00FF41] md:hidden"
+							className="md:hidden"
 						>
 							<span aria-hidden="true">⌘</span>
 							Commands
-						</button>
+						</TerminalShortcutButton>
 						<Button
 							variant="ghost"
 							size="icon"
@@ -1327,156 +1328,116 @@ export default function Terminal({onClose}: Props) {
 				</div>
 				{/* Desktop Command Buttons - Only visible on desktop */}
 				<nav className="hidden md:flex mt-4 flex-wrap justify-center gap-2">
-					<Button
-						variant="outline"
-						size="sm"
+					<TerminalShortcutButton
 						onClick={() => {
 							handleSubmit(
 								{preventDefault: () => {}} as React.FormEvent,
 								"blog ls"
 							);
 						}}
-						// className="text-xs bg-black/50 hover:bg-black/70 text-white border-white/30"
-						className="relative text-xs bg-gradient-to-br from-[#1a2e1a]/80 via-black/70 to-[#0f1f0f]/80 hover:from-[#16213e]/90 hover:via-black/80 hover:to-[#1a2e1a]/90 text-white/90 hover:text-white border border-green-400/20 hover:border-[#00FF41]/50 px-5 py-2.5 rounded-md font-mono transition-all duration-300 hover:text-[#00FF41] group shadow-lg hover:shadow-xl hover:shadow-[#00FF41]/15 backdrop-blur-sm overflow-hidden"
 					>
 						<Code className="h-3 w-3 mr-1" />
 						Blogs
-					</Button>
-					<Button
-						variant="outline"
-						size="sm"
+					</TerminalShortcutButton>
+					<TerminalShortcutButton
 						onClick={() => {
 							handleSubmit(
 								{preventDefault: () => {}} as React.FormEvent,
 								"about"
 							);
 						}}
-						// className="text-xs bg-black/50 hover:bg-black/70 text-white border-white/30"
-						className="relative text-xs bg-gradient-to-br from-[#1a2e1a]/80 via-black/70 to-[#0f1f0f]/80 hover:from-[#16213e]/90 hover:via-black/80 hover:to-[#1a2e1a]/90 text-white/90 hover:text-white border border-green-400/20 hover:border-[#00FF41]/50 px-5 py-2.5 rounded-md font-mono transition-all duration-300 hover:text-[#00FF41] group shadow-lg hover:shadow-xl hover:shadow-[#00FF41]/15 backdrop-blur-sm overflow-hidden"
 					>
 						<User className="h-3 w-3 mr-1" />
 						About
-					</Button>
-					<Button
-						variant="outline"
-						size="sm"
+					</TerminalShortcutButton>
+					<TerminalShortcutButton
 						onClick={() => {
 							handleSubmit(
 								{preventDefault: () => {}} as React.FormEvent,
 								"education"
 							);
 						}}
-						// className="text-xs bg-black/50 hover:bg-black/70 text-white border-white/30"
-						className="relative text-xs bg-gradient-to-br from-[#1a2e1a]/80 via-black/70 to-[#0f1f0f]/80 hover:from-[#16213e]/90 hover:via-black/80 hover:to-[#1a2e1a]/90 text-white/90 hover:text-white border border-green-400/20 hover:border-[#00FF41]/50 px-5 py-2.5 rounded-md font-mono transition-all duration-300 hover:text-[#00FF41] group shadow-lg hover:shadow-xl hover:shadow-[#00FF41]/15 backdrop-blur-sm overflow-hidden"
 					>
 						<GraduationCap className="h-3 w-3 mr-1" />
 						Education
-					</Button>
-					<Button
-						variant="outline"
-						size="sm"
+					</TerminalShortcutButton>
+					<TerminalShortcutButton
 						onClick={() => {
 							handleSubmit(
 								{preventDefault: () => {}} as React.FormEvent,
 								"skills"
 							);
 						}}
-						// className="text-xs bg-black/50 hover:bg-black/70 text-white border-white/30"
-						className="relative text-xs bg-gradient-to-br from-[#1a2e1a]/80 via-black/70 to-[#0f1f0f]/80 hover:from-[#16213e]/90 hover:via-black/80 hover:to-[#1a2e1a]/90 text-white/90 hover:text-white border border-green-400/20 hover:border-[#00FF41]/50 px-5 py-2.5 rounded-md font-mono transition-all duration-300 hover:text-[#00FF41] group shadow-lg hover:shadow-xl hover:shadow-[#00FF41]/15 backdrop-blur-sm overflow-hidden"
 					>
 						<Shield className="h-3 w-3 mr-1" />
 						Skills
-					</Button>
-					<Button
-						variant="outline"
-						size="sm"
+					</TerminalShortcutButton>
+					<TerminalShortcutButton
 						onClick={() => {
 							handleSubmit(
 								{preventDefault: () => {}} as React.FormEvent,
 								"experience"
 							);
 						}}
-						// className="text-xs bg-black/50 hover:bg-black/70 text-white border-white/30"
-						className="relative text-xs bg-gradient-to-br from-[#1a2e1a]/80 via-black/70 to-[#0f1f0f]/80 hover:from-[#16213e]/90 hover:via-black/80 hover:to-[#1a2e1a]/90 text-white/90 hover:text-white border border-green-400/20 hover:border-[#00FF41]/50 px-5 py-2.5 rounded-md font-mono transition-all duration-300 hover:text-[#00FF41] group shadow-lg hover:shadow-xl hover:shadow-[#00FF41]/15 backdrop-blur-sm overflow-hidden"
 					>
 						<Briefcase className="h-3 w-3 mr-1" />
 						Experience
-					</Button>
-					<Button
-						variant="outline"
-						size="sm"
+					</TerminalShortcutButton>
+					<TerminalShortcutButton
 						onClick={() => {
 							handleSubmit(
 								{preventDefault: () => {}} as React.FormEvent,
 								"projects"
 							);
 						}}
-						// className="text-xs bg-black/50 hover:bg-black/70 text-white border-white/30"
-						className="relative text-xs bg-gradient-to-br from-[#1a2e1a]/80 via-black/70 to-[#0f1f0f]/80 hover:from-[#16213e]/90 hover:via-black/80 hover:to-[#1a2e1a]/90 text-white/90 hover:text-white border border-green-400/20 hover:border-[#00FF41]/50 px-5 py-2.5 rounded-md font-mono transition-all duration-300 hover:text-[#00FF41] group shadow-lg hover:shadow-xl hover:shadow-[#00FF41]/15 backdrop-blur-sm overflow-hidden"
 					>
 						<Code className="h-3 w-3 mr-1" />
 						Projects
-					</Button>
-					<Button
-						variant="outline"
-						size="sm"
+					</TerminalShortcutButton>
+					<TerminalShortcutButton
 						onClick={() => {
 							handleSubmit(
 								{preventDefault: () => {}} as React.FormEvent,
 								"certifications"
 							);
 						}}
-						// className="text-xs bg-black/50 hover:bg-black/70 text-white border-white/30"
-						className="relative text-xs bg-gradient-to-br from-[#1a2e1a]/80 via-black/70 to-[#0f1f0f]/80 hover:from-[#16213e]/90 hover:via-black/80 hover:to-[#1a2e1a]/90 text-white/90 hover:text-white border border-green-400/20 hover:border-[#00FF41]/50 px-5 py-2.5 rounded-md font-mono transition-all duration-300 hover:text-[#00FF41] group shadow-lg hover:shadow-xl hover:shadow-[#00FF41]/15 backdrop-blur-sm overflow-hidden"
 					>
 						<Award className="h-3 w-3 mr-1" />
 						Certifications
-					</Button>
-					<Button
-						variant="outline"
-						size="sm"
+					</TerminalShortcutButton>
+					<TerminalShortcutButton
 						onClick={() => {
 							handleSubmit(
 								{preventDefault: () => {}} as React.FormEvent,
 								"contact"
 							);
 						}}
-						// className="text-xs bg-black/50 hover:bg-black/70 text-white border-white/30"
-						className="relative text-xs bg-gradient-to-br from-[#1a2e1a]/80 via-black/70 to-[#0f1f0f]/80 hover:from-[#16213e]/90 hover:via-black/80 hover:to-[#1a2e1a]/90 text-white/90 hover:text-white border border-green-400/20 hover:border-[#00FF41]/50 px-5 py-2.5 rounded-md font-mono transition-all duration-300 hover:text-[#00FF41] group shadow-lg hover:shadow-xl hover:shadow-[#00FF41]/15 backdrop-blur-sm overflow-hidden"
 					>
 						<Mail className="h-3 w-3 mr-1" />
 						Contact
-					</Button>
-					<Button
-						variant="outline"
-						size="sm"
+					</TerminalShortcutButton>
+					<TerminalShortcutButton
 						onClick={() => {
 							handleSubmit(
 								{preventDefault: () => {}} as React.FormEvent,
 								"resume"
 							);
 						}}
-						// className="text-xs bg-black/50 hover:bg-black/70 text-white border-white/30"
-						className="relative text-xs bg-gradient-to-br from-[#1a2e1a]/80 via-black/70 to-[#0f1f0f]/80 hover:from-[#16213e]/90 hover:via-black/80 hover:to-[#1a2e1a]/90 text-white/90 hover:text-white border border-green-400/20 hover:border-[#00FF41]/50 px-5 py-2.5 rounded-md font-mono transition-all duration-300 hover:text-[#00FF41] group shadow-lg hover:shadow-xl hover:shadow-[#00FF41]/15 backdrop-blur-sm overflow-hidden"
 					>
 						<FileDown className="h-3 w-3 mr-1" />
 						View Resume
-					</Button>
-					<Button
-						variant="outline"
-						size="sm"
+					</TerminalShortcutButton>
+					<TerminalShortcutButton
 						onClick={() => {
 							handleSubmit(
 								{preventDefault: () => {}} as React.FormEvent,
 								"clear"
 							);
 						}}
-						// className="text-xs bg-black/50 hover:bg-black/70 text-white border-white/30"
-						className="relative text-xs bg-gradient-to-br from-[#1a2e1a]/80 via-black/70 to-[#0f1f0f]/80 hover:from-[#16213e]/90 hover:via-black/80 hover:to-[#1a2e1a]/90 text-white/90 hover:text-white border border-green-400/20 hover:border-[#00FF41]/50 px-5 py-2.5 rounded-md font-mono transition-all duration-300 hover:text-[#00FF41] group shadow-lg hover:shadow-xl hover:shadow-[#00FF41]/15 backdrop-blur-sm overflow-hidden"
 					>
 						<Trash2 className="h-3 w-3 mr-1" />
 						Clear
-					</Button>
+					</TerminalShortcutButton>
 				</nav>
 				{/* Keep the portal mounted so opening and closing use compositor transitions. */}
 				{typeof document !== "undefined" && createPortal(
