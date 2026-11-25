@@ -1,7 +1,7 @@
 import { AsciiArt } from "@/components/ascii-art"
 import { Mail, Phone, MapPin, Linkedin, Github } from "lucide-react"
 import { data } from "@/lib/data"
-import { ResumeDownloadButton } from "@/components/resume-download-button"
+import { ResumeViewButton } from "@/components/resume-download-button"
 
 export function ContactSection() {
   const contact = data.contact
@@ -51,7 +51,7 @@ export function ContactSection() {
         </div>
         <div className="mt-6 pt-4 border-t border-primary/20">
           <div className="flex justify-center">
-            <ResumeDownloadButton />
+            <ResumeViewButton />
           </div>
         </div>
       </div>

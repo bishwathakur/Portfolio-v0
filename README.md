@@ -33,7 +33,7 @@ The website includes a terminal interface with the following commands:
 -   `projects` - Lists projects.
 -   `certifications` - Displays certifications.
 -   `contact` - Shows contact information.
--   `resume` - Provides a link to download the resume.
+-   `resume` - Provides a link to view the Resume in a new tab.
 -   `exit` - Closes the terminal.
 
 ### Easter Egg Commands

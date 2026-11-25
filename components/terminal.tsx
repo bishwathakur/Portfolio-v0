@@ -23,7 +23,7 @@ import {ProjectsSection} from "@/components/projects-section";
 import {CertificationsSection} from "@/components/certifications-section";
 import {ContactSection} from "@/components/contact-section";
 import {ImageAsciiLogo} from "@/components/image-ascii-logo";
-import {ResumeDownloadButton} from "@/components/resume-download-button";
+import {ResumeViewButton} from "@/components/resume-download-button";
 import {motion, AnimatePresence} from "framer-motion";
 import {PlayVideo} from "./play-video";
 import {TypewriterSection} from "./typewriter-section";
@@ -82,6 +82,13 @@ export default function Terminal({onClose}: Props) {
 
 		document.addEventListener("click", handleClick);
 
+		return () => {
+			document.removeEventListener("click", handleClick);
+		};
+	}, [showMobileCommands]);
+
+	useEffect(() => {
+
 		// Add welcome message
 		setCommandHistory([
 			{
@@ -126,11 +133,7 @@ export default function Terminal({onClose}: Props) {
 				timestamp: new Date(),
 			},
 		]);
-
-		return () => {
-			document.removeEventListener("click", handleClick);
-		};
-	}, [showMobileCommands]);
+	}, []);
 
 	useEffect(() => {
 		scrollToBottom();
@@ -335,7 +338,7 @@ export default function Terminal({onClose}: Props) {
 										resume
 									</span>
 									<span className="text-white/70">
-										- Download CV
+										- View Resume
 									</span>
 								</div>
 							</div>
@@ -555,15 +558,15 @@ export default function Terminal({onClose}: Props) {
 			case command === "resume":
 				output = (
 					<div className="space-y-4 text-white">
-						<p>Download my resume:</p>
+						<p>Resume (PDF):</p>
 						<div className="flex justify-start">
 							<TypewriterSection
-								command="resume_data.txt"
+								command="resume.txt"
 								onComplete={() => {
 									setTimeout(() => scrollToBottom(), 100);
 								}}
 							>
-								<ResumeDownloadButton />
+								<ResumeViewButton />
 							</TypewriterSection>
 						</div>
 					</div>
@@ -1473,7 +1476,7 @@ export default function Terminal({onClose}: Props) {
 						className="relative text-xs bg-gradient-to-br from-[#1a2e1a]/80 via-black/70 to-[#0f1f0f]/80 hover:from-[#16213e]/90 hover:via-black/80 hover:to-[#1a2e1a]/90 text-white/90 hover:text-white border border-green-400/20 hover:border-[#00FF41]/50 px-5 py-2.5 rounded-md font-mono transition-all duration-300 hover:text-[#00FF41] group shadow-lg hover:shadow-xl hover:shadow-[#00FF41]/15 backdrop-blur-sm overflow-hidden"
 					>
 						<FileDown className="h-3 w-3 mr-1" />
-						Resume
+						View Resume
 					</Button>
 					<Button
 						variant="outline"
@@ -1741,7 +1744,7 @@ export default function Terminal({onClose}: Props) {
 												className="relative text-xs bg-gradient-to-br from-[#1a2e1a]/80 via-black/70 to-[#0f1f0f]/80 hover:from-[#16213e]/90 hover:via-black/80 hover:to-[#1a2e1a]/90 text-white/90 hover:text-white border border-green-400/20 hover:border-[#00FF41]/50 px-5 py-2.5 rounded-md font-mono transition-all duration-300 hover:text-[#00FF41] group shadow-lg hover:shadow-xl hover:shadow-[#00FF41]/15 backdrop-blur-sm overflow-hidden"
 											>
 												<FileDown className="h-3 w-3 mr-2 flex-shrink-0" />
-												Resume
+												View Resume
 											</button>
 										</div>
 									</div>
