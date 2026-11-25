@@ -27,8 +27,9 @@ export default function BootSequence() {
 
 	return (
 		<div className="flex flex-col items-center justify-center h-full">
-			<div className="w-full max-w-4xl bg-black/90 p-8 rounded-lg border border-[#00FF41]/30 font-mono text-gray-900 dark:text-gray-50 shadow-2xl shadow-[#00FF41]/20">
-				<div className="mb-6 text-center">
+			<div className="w-full max-w-4xl bg-black/90 p-4 md:p-8 rounded-lg border border-[#00FF41]/30 font-mono text-gray-900 dark:text-gray-50 shadow-2xl shadow-[#00FF41]/20">
+				<p className="mb-3 text-sm font-bold text-[#00FF41] md:hidden">Bishwa Thakur / Terminal</p>
+				<div className="mb-6 hidden text-center md:block">
 					<pre className="text-xs sm:text-sm md:text-base whitespace-pre overflow-x-auto">
 						{`
 ██████╗ ██╗███████╗██╗  ██╗██╗    ██╗ █████╗
@@ -42,7 +43,7 @@ export default function BootSequence() {
 					</pre>
 				</div>
 
-				<div className="space-y-2">
+				<div className="space-y-1 text-xs md:space-y-2 md:text-base">
 					{bootMessages
 						.slice(0, currentMessageIndex)
 						.map((message, index) => (

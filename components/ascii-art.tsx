@@ -1,4 +1,18 @@
 export function AsciiArt({ art }: { art: string }) {
+  const banner = renderAsciiArt(art);
+  if (!banner) return null;
+
+  return (
+    <>
+      <h2 data-mobile-section-title className="border-b border-[#00FF41]/20 pb-2 text-lg font-bold capitalize tracking-tight text-[#00FF41] md:sr-only">
+        {art}
+      </h2>
+      <div data-desktop-ascii aria-hidden="true" className="hidden md:block">{banner}</div>
+    </>
+  );
+}
+
+function renderAsciiArt(art: string) {
   switch (art) {
     case "welcome":
       return (
