@@ -260,3 +260,41 @@
     height: var(--terminal-viewport-height, 100dvh);
   }
 }
+
+.mobile-commands-backdrop {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 160ms ease-out, visibility 0s 160ms;
+}
+
+.mobile-command-sheet {
+  bottom: var(--sheet-bottom, 0px);
+  max-height: var(--sheet-height, 70vh);
+  transform: translate3d(0, 100%, 0);
+  visibility: hidden;
+  pointer-events: none;
+  transition: transform 190ms cubic-bezier(0.4, 0, 1, 1), visibility 0s 190ms;
+}
+
+.mobile-commands-backdrop[data-open="true"] {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transition-delay: 0s;
+}
+
+.mobile-command-sheet[data-open="true"] {
+  transform: translate3d(0, 0, 0);
+  visibility: visible;
+  pointer-events: auto;
+  transition: transform 240ms cubic-bezier(0.2, 0.75, 0.25, 1), visibility 0s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mobile-commands-backdrop,
+  .mobile-command-sheet,
+  .mobile-command-sheet[data-open="true"] {
+    transition: none;
+  }
+}
