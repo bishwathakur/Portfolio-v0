@@ -1,17 +1,28 @@
+import { useEffect, useState } from "react"
 import { AsciiArt } from "@/components/ascii-art"
 import { AsciiPortraitComparison } from "@/components/ascii-portrait-comparison"
 import { data } from "@/lib/data"
 
 export function AboutSection() {
   const about = data.about
+  const [portraitOpen, setPortraitOpen] = useState(false)
+  const [desktop, setDesktop] = useState(false)
+
+  useEffect(() => {
+    const media = window.matchMedia("(min-width: 768px)")
+    const update = () => setDesktop(media.matches)
+    update()
+    media.addEventListener("change", update)
+    return () => media.removeEventListener("change", update)
+  }, [])
 
   return (
     <div className="space-y-4">
       <AsciiArt art="about" />
 
-      <div className="flex flex-col md:flex-row gap-6">
-        <div className="md:w-2/5">
-          <AsciiPortraitComparison />
+      <div className="flex flex-col gap-4 md:flex-row md:gap-6">
+        <div data-desktop-portrait className="hidden md:block md:w-2/5">
+          {desktop && <AsciiPortraitComparison />}
           <div className="text-center text-xs text-gray-500 mt-2 dark:text-gray-400">
             {about.name}
             <br />
@@ -20,6 +31,7 @@ export function AboutSection() {
         </div>
 
         <div className="space-y-3 md:w-3/5">
+          <p className="text-xs text-green-100/75 md:hidden">{about.name} · {about.title}</p>
           {about.bio.map((paragraph, index) => (
             <p key={index}>{paragraph}</p>
           ))}
@@ -43,6 +55,10 @@ export function AboutSection() {
               ))}
             </ul>
           </div>
+          <details onToggle={event => setPortraitOpen(event.currentTarget.open)} className="rounded-lg border border-[#00FF41]/20 bg-[#0d190f] px-3 py-2 md:hidden">
+            <summary className="cursor-pointer py-1 text-xs text-[#00FF41]">View ASCII portrait</summary>
+            {portraitOpen && <div className="mt-3"><AsciiPortraitComparison compact /></div>}
+          </details>
         </div>
       </div>
     </div>
