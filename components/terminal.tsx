@@ -27,6 +27,7 @@ import {ResumeViewButton} from "@/components/resume-download-button";
 import {motion, AnimatePresence} from "framer-motion";
 import {PlayVideo} from "./play-video";
 import {TypewriterSection} from "./typewriter-section";
+import {TabKeyIcon} from "./tab-key-icon";
 
 type Command = {
 	input: string;
@@ -1316,10 +1317,12 @@ export default function Terminal({onClose}: Props) {
 						</div>
 						<button
 							type="button"
+							aria-label="Autocomplete command"
+							title="Tab"
 							onClick={() => handleTabAutocomplete(input)}
 							className="text-[#00FF41] border border-[#00FF41]/40 px-2 py-1 rounded hover:bg-[#00FF41]/10 block md:hidden"
 						>
-							⭾
+							<TabKeyIcon className="h-5 w-5" />
 						</button>
 					</form>
 				</div>
