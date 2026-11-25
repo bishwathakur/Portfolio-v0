@@ -1,6 +1,7 @@
 "use client";
 
 import type React from "react";
+import {createPortal} from "react-dom";
 import {useState, useEffect, useRef, useCallback} from "react";
 import {
 	TerminalIcon,
@@ -15,6 +16,7 @@ import {
 	Trash2,
 } from "lucide-react";
 import {Button} from "@/components/ui/button";
+import {TerminalShortcutButton} from "./terminal-shortcut-button";
 import {AboutSection} from "@/components/about-section";
 import {EducationSection} from "@/components/education-section";
 import {SkillsSection} from "@/components/skills-section";
@@ -22,11 +24,12 @@ import {ExperienceSection} from "@/components/experience-section";
 import {ProjectsSection} from "@/components/projects-section";
 import {CertificationsSection} from "@/components/certifications-section";
 import {ContactSection} from "@/components/contact-section";
-import {ImageAsciiLogo} from "@/components/image-ascii-logo";
+import {DesktopTerminalWelcome, MobileCommandsMenu, MobileTerminalWelcome, TerminalDirectory} from "./mobile-terminal";
 import {ResumeViewButton} from "@/components/resume-download-button";
 import {motion, AnimatePresence} from "framer-motion";
 import {PlayVideo} from "./play-video";
 import {TypewriterSection} from "./typewriter-section";
+import {TabKeyIcon} from "./tab-key-icon";
 
 type Command = {
 	input: string;
@@ -46,46 +49,101 @@ export default function Terminal({onClose}: Props) {
 	const [isVisible, setIsVisible] = useState(true);
 	const [availableBlogSlugs, setAvailableBlogSlugs] = useState<string[]>([]);
 	const [showMobileCommands, setShowMobileCommands] = useState(false);
+	const [mobileSheetReady, setMobileSheetReady] = useState(false);
+	const mobileSheetRef = useRef<HTMLDivElement>(null);
+	const mobileSheetVisible = showMobileCommands && mobileSheetReady;
 	const inputRef = useRef<HTMLInputElement>(null);
 	const terminalRef = useRef<HTMLDivElement>(null);
 
-	// Use useCallback to memoize the scrollToBottom function
 	const scrollToBottom = useCallback(() => {
-		if (terminalRef.current) {
-			terminalRef.current.scrollTop = terminalRef.current.scrollHeight;
+		const terminal = terminalRef.current;
+		if (!terminal) return;
+		if (window.matchMedia("(max-width: 767px)").matches) {
+			const entry = terminal.lastElementChild;
+			// Start at the newest response, not the end of a long section.
+			terminal.scrollTop = entry instanceof HTMLElement ? Math.max(0, entry.offsetTop - 12) : 0;
+			return;
 		}
+		terminal.scrollTop = terminal.scrollHeight;
+	}, []);
+
+	const scrollAfterTyping = useCallback(() => {
+		if (window.matchMedia("(min-width: 768px)").matches) {
+			setTimeout(scrollToBottom, 100);
+		} else {
+			scrollToBottom();
+		}
+	}, [scrollToBottom]);
+
+	useEffect(() => {
+		const desktopInput = window.matchMedia(
+			"(min-width: 768px) and (hover: hover) and (pointer: fine)"
+		);
+		const focusDesktopInput = () => {
+			if (desktopInput.matches) inputRef.current?.focus();
+		};
+
+		focusDesktopInput();
+		document.addEventListener("click", focusDesktopInput);
+		return () => document.removeEventListener("click", focusDesktopInput);
 	}, []);
 
 	useEffect(() => {
-		// Focus input on mount and when clicking anywhere in the terminal
-		inputRef.current?.focus();
+		if (!showMobileCommands) return;
+		const viewport = window.visualViewport;
+		const sheet = mobileSheetRef.current;
+		if (!viewport || !sheet) return;
 
-		const handleClick = (e: MouseEvent) => {
-			const target = e.target as Element;
-			const isMobile = window.innerWidth < 768;
-
-			// Check if clicking on mobile command elements
-			const isMobileCommandPanel =
-				target.closest("[data-mobile-commands]") ||
-				target.classList.contains("mobile-commands-backdrop") ||
-				target.closest("[data-mobile-toggle]");
-
-			// Don't focus input if:
-			// 1. On mobile and commands panel is open, OR
-			// 2. Clicking on mobile command related elements
-			if ((isMobile && showMobileCommands) || isMobileCommandPanel) {
-				return;
+		let frame = 0;
+		let settle = 0;
+		const reveal = () => setMobileSheetReady(true);
+		const updatePosition = () => {
+			const bottom = Math.max(0, window.innerHeight - viewport.height - viewport.offsetTop);
+			sheet.style.setProperty("--sheet-bottom", Math.round(bottom) + "px");
+			sheet.style.setProperty("--sheet-height", Math.floor(viewport.height * 0.7) + "px");
+			window.clearTimeout(settle);
+			if (bottom <= 24) {
+				reveal();
+			} else {
+				// Start the slide after keyboard dismissal stops moving the viewport.
+				settle = window.setTimeout(reveal, 90);
 			}
-
-			inputRef.current?.focus();
+		};
+		const scheduleUpdate = () => {
+			window.cancelAnimationFrame(frame);
+			frame = window.requestAnimationFrame(updatePosition);
 		};
 
-		document.addEventListener("click", handleClick);
-
+		updatePosition();
+		const deadline = window.setTimeout(reveal, 380);
+		viewport.addEventListener("resize", scheduleUpdate);
+		viewport.addEventListener("scroll", scheduleUpdate);
+		window.addEventListener("resize", scheduleUpdate);
 		return () => {
-			document.removeEventListener("click", handleClick);
+			window.cancelAnimationFrame(frame);
+			window.clearTimeout(settle);
+			window.clearTimeout(deadline);
+			viewport.removeEventListener("resize", scheduleUpdate);
+			viewport.removeEventListener("scroll", scheduleUpdate);
+			window.removeEventListener("resize", scheduleUpdate);
 		};
 	}, [showMobileCommands]);
+
+	useEffect(() => {
+		if (mobileSheetRef.current) mobileSheetRef.current.inert = !mobileSheetVisible;
+	}, [mobileSheetVisible]);
+
+	const toggleMobileCommands = () => {
+		if (showMobileCommands) {
+			setShowMobileCommands(false);
+			return;
+		}
+		const viewport = window.visualViewport;
+		const bottom = viewport ? window.innerHeight - viewport.height - viewport.offsetTop : 0;
+		setMobileSheetReady(bottom < 80);
+		inputRef.current?.blur();
+		setShowMobileCommands(true);
+	};
 
 	useEffect(() => {
 
@@ -93,43 +151,7 @@ export default function Terminal({onClose}: Props) {
 		setCommandHistory([
 			{
 				input: "welcome",
-				output: (
-					<div className="space-y-2">
-						<ImageAsciiLogo />
-						<div className="bg-[#00FF41]/10 border border-[#00FF41]/30 rounded-lg p-4 mt-4">
-							<p className="font-mono text-white text-center">
-								🌟 Welcome to{" "}
-								<span className="text-[#00FF41] font-bold">
-									Bishwa Thakur's
-								</span>{" "}
-								interactive portfolio! 🌟
-							</p>
-							<p className="font-mono text-white/80 text-center text-sm mt-2">
-								Navigate using commands or click the buttons
-								below. Start with{" "}
-								<code className="bg-black/50 px-1 rounded text-[#00FF41]">
-									blog ls
-								</code>{" "}
-								to explore my writings!
-							</p>
-
-							{/* Add keyboard shortcuts note */}
-							<div className="border-t border-[#00FF41]/20 mt-4 pt-3">
-								<p className="font-mono text-[#00FF41]/70 text-center text-xs">
-									💡 Pro tip: Use{" "}
-									<span className="bg-black/50 px-1 rounded text-[#00FF41]">
-										↑↓
-									</span>{" "}
-									for command history •
-									<span className="bg-black/50 px-1 rounded text-[#00FF41]">
-										Tab
-									</span>{" "}
-									for autocomplete or available commands
-								</p>
-							</div>
-						</div>
-					</div>
-				),
+				output: <DesktopTerminalWelcome />,
 				timestamp: new Date(),
 			},
 		]);
@@ -181,42 +203,7 @@ export default function Terminal({onClose}: Props) {
 				break;
 
 			case command === "welcome":
-				output = (
-					<div className="space-y-2">
-						<ImageAsciiLogo />
-						<div className="bg-[#00FF41]/10 border border-[#00FF41]/30 rounded-lg p-4 mt-4">
-							<p className="font-mono text-white text-center">
-								🌟 Welcome to{" "}
-								<span className="text-[#00FF41] font-bold">
-									Bishwa Thakur's
-								</span>{" "}
-								interactive portfolio! 🌟
-							</p>
-							<p className="font-mono text-white/80 text-center text-sm mt-2">
-								Navigate using commands or click the buttons
-								below. Start with{" "}
-								<code className="bg-black/50 px-1 rounded text-[#00FF41]">
-									blog ls
-								</code>{" "}
-								to explore my writings!
-							</p>
-							{/* Add keyboard shortcuts note */}
-							<div className="border-t border-[#00FF41]/20 mt-4 pt-3">
-								<p className="font-mono text-[#00FF41]/70 text-center text-xs">
-									💡 Pro tip: Use{" "}
-									<span className="bg-black/50 px-1 rounded text-[#00FF41]">
-										↑↓
-									</span>{" "}
-									for command history •
-									<span className="bg-black/50 px-1 rounded text-[#00FF41]">
-										Tab
-									</span>{" "}
-									for autocomplete and available commands
-								</p>
-							</div>
-						</div>
-					</div>
-				);
+				output = <DesktopTerminalWelcome />;
 				setCurrentSection(null);
 				break;
 
@@ -242,23 +229,7 @@ export default function Terminal({onClose}: Props) {
 				break;
 
 			case command === "ls":
-				output = (
-					<div className="text-[#00FF41]">
-						<span>about</span>
-						{"   "}
-						<span>education</span>
-						{"   "}
-						<span>skills</span>
-						{"   "}
-						<span>experience</span>
-						{"   "}
-						<span>projects</span>
-						{"   "}
-						<span>certifications</span>
-						{"   "}
-						<span>contact</span>
-					</div>
-				);
+				output = <TerminalDirectory onRun={runCommand} />;
 				setCurrentSection(null);
 				break;
 
@@ -470,9 +441,7 @@ export default function Terminal({onClose}: Props) {
 				output = (
 					<TypewriterSection
 						command="education_data.txt"
-						onComplete={() => {
-							setTimeout(() => scrollToBottom(), 100);
-						}}
+						onComplete={scrollAfterTyping}
 					>
 						<EducationSection />
 					</TypewriterSection>
@@ -484,9 +453,7 @@ export default function Terminal({onClose}: Props) {
 				output = (
 					<TypewriterSection
 						command="skills_data.txt"
-						onComplete={() => {
-							setTimeout(() => scrollToBottom(), 100);
-						}}
+						onComplete={scrollAfterTyping}
 					>
 						<SkillsSection />
 					</TypewriterSection>
@@ -498,9 +465,7 @@ export default function Terminal({onClose}: Props) {
 				output = (
 					<TypewriterSection
 						command="experience_data.txt"
-						onComplete={() => {
-							setTimeout(() => scrollToBottom(), 100);
-						}}
+						onComplete={scrollAfterTyping}
 					>
 						<ExperienceSection />
 					</TypewriterSection>
@@ -512,9 +477,7 @@ export default function Terminal({onClose}: Props) {
 				output = (
 					<TypewriterSection
 						command="projects_data.txt"
-						onComplete={() => {
-							setTimeout(() => scrollToBottom(), 100);
-						}}
+						onComplete={scrollAfterTyping}
 					>
 						<ProjectsSection />
 					</TypewriterSection>
@@ -526,9 +489,7 @@ export default function Terminal({onClose}: Props) {
 				output = (
 					<TypewriterSection
 						command="certifications_data.txt"
-						onComplete={() => {
-							setTimeout(() => scrollToBottom(), 100);
-						}}
+						onComplete={scrollAfterTyping}
 					>
 						<CertificationsSection />
 					</TypewriterSection>
@@ -540,9 +501,7 @@ export default function Terminal({onClose}: Props) {
 				output = (
 					<TypewriterSection
 						command="contact_data.txt"
-						onComplete={() => {
-							setTimeout(() => scrollToBottom(), 100);
-						}}
+						onComplete={scrollAfterTyping}
 					>
 						<ContactSection />
 					</TypewriterSection>
@@ -562,9 +521,7 @@ export default function Terminal({onClose}: Props) {
 						<div className="flex justify-start">
 							<TypewriterSection
 								command="resume.txt"
-								onComplete={() => {
-									setTimeout(() => scrollToBottom(), 100);
-								}}
+								onComplete={scrollAfterTyping}
 							>
 								<ResumeViewButton />
 							</TypewriterSection>
@@ -616,7 +573,7 @@ export default function Terminal({onClose}: Props) {
 							{
 								input: command,
 								output: (
-									<div className="text-[#00FF41] grid grid-cols-3 gap-2">
+									<div className="grid grid-cols-1 gap-2 text-[#00FF41] md:grid-cols-3">
 										{slugs.length > 0 ? (
 											slugs.map((slug: string) => (
 												<span
@@ -1102,6 +1059,10 @@ export default function Terminal({onClose}: Props) {
 		setHistoryIndex(-1);
 	};
 
+	const runCommand = (command: string) => {
+		handleSubmit({preventDefault() {}} as React.FormEvent, command);
+	};
+
 	// Add autocomplete function
 	const handleTabAutocomplete = (currentInput: string) => {
 		const trimmedInput = currentInput.trim();
@@ -1124,7 +1085,7 @@ export default function Terminal({onClose}: Props) {
 				const output = (
 					<div className="text-[#00FF41]">
 						<p className="mb-2">Available completions:</p>
-						<div className="grid grid-cols-3 gap-2 ml-4">
+						<div className="grid grid-cols-1 gap-2 [overflow-wrap:anywhere] md:ml-4 md:grid-cols-3">
 							{matches.map(slug => (
 								<span
 									key={slug}
@@ -1180,7 +1141,7 @@ export default function Terminal({onClose}: Props) {
 			const output = (
 				<div className="text-[#00FF41]">
 					<p className="mb-2">Available commands:</p>
-					<div className="grid grid-cols-4 gap-2 ml-4">
+					<div className="grid grid-cols-2 gap-x-3 gap-y-2 [overflow-wrap:anywhere] md:ml-4 md:grid-cols-4">
 						{matches.map(cmd => (
 							<span
 								key={cmd}
@@ -1267,52 +1228,72 @@ export default function Terminal({onClose}: Props) {
 				exit={{scale: 0.9, opacity: 0}}
 				transition={{duration: 0.2}}
 			>
-				<div className="bg-black border border-gray-200 border-white/30 rounded-t-md p-2 flex items-center justify-between dark:border-gray-800">
-					<div className="flex items-center">
-						<TerminalIcon className="h-4 w-4 text-white mr-2" />
-						<span className="text-sm font-mono text-white">
+				<div className="bg-black border border-gray-200 border-white/30 rounded-t-md p-2 flex shrink-0 items-center justify-between gap-2 dark:border-gray-800">
+					<div className="flex min-w-0 items-center">
+						<TerminalIcon className="h-4 w-4 shrink-0 text-white mr-2" />
+						<span className="truncate text-xs md:text-sm font-mono text-white">
 							bishwa@portfolio ~{" "}
 							{currentSection ? `/${currentSection}` : ""}
 						</span>
 					</div>
-					<Button
-						variant="ghost"
-						size="icon"
-						onClick={onClose}
-						className="h-6 w-6 hover:bg-white/10"
-					>
-						<span className="text-white text-lg">&times;</span>
-					</Button>
+					<div className="flex shrink-0 items-center gap-1.5">
+						<TerminalShortcutButton
+							touch
+							data-mobile-toggle="true"
+							aria-expanded={showMobileCommands}
+							aria-controls={showMobileCommands ? "mobile-command-sheet" : undefined}
+							onClick={toggleMobileCommands}
+							className="md:hidden"
+						>
+							<span aria-hidden="true">⌘</span>
+							Commands
+						</TerminalShortcutButton>
+						<Button
+							variant="ghost"
+							size="icon"
+							aria-label="Close terminal"
+							onClick={onClose}
+							className="h-11 w-8 hover:bg-white/10 md:h-6 md:w-6"
+						>
+							<span className="text-white text-lg">&times;</span>
+						</Button>
+					</div>
 				</div>
 				<div
 					ref={terminalRef}
-					className="flex-1 bg-black border-x border-white/30 p-4 overflow-y-auto font-mono text-sm"
+					className="relative min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-contain border-x border-white/30 bg-black p-3 font-mono text-sm max-md:[overflow-anchor:none] [overflow-wrap:anywhere] [&_pre]:overflow-x-auto md:p-4"
 				>
 					{commandHistory.map((cmd, index) => (
-						<div key={index} className="mb-4">
-							<div className="flex items-center text-white/70">
-								<span className="text-white mr-2">$</span>
-								<span>{cmd.input}</span>
+						<div key={index} data-terminal-entry={cmd.input} className="mb-4">
+							<div className={cmd.input === "welcome" ? "hidden items-start text-white/70 md:flex" : "flex items-start text-white/70"}>
+								<span className="mr-2 shrink-0 text-white">$</span>
+								<span className="min-w-0">{cmd.input}</span>
 							</div>
-							<div className="mt-1 ml-4">{cmd.output}</div>
+							<div className="mt-1 min-w-0 md:ml-4">
+								{cmd.input === "welcome" && <MobileTerminalWelcome onRun={runCommand} />}
+								{cmd.output}
+							</div>
 						</div>
 					))}
 				</div>
-				<div className="bg-black border border-gray-200 border-white/30 rounded-b-md p-2 dark:border-gray-800">
-					<form onSubmit={handleSubmit} className="flex items-center">
-						<span className="text-white mr-2">$</span>
-						<div className="flex-1 relative">
+				<div className="bg-black border border-gray-200 border-white/30 shrink-0 rounded-b-md p-2 dark:border-gray-800">
+					<form onSubmit={handleSubmit} className="flex min-w-0 items-center gap-2">
+						<span aria-hidden="true" className="shrink-0 text-white">$</span>
+						<div className="relative min-w-0 flex-1 overflow-hidden">
 							<input
 								ref={inputRef}
 								type="text"
 								value={input}
 								onChange={e => setInput(e.target.value)}
 								onKeyDown={handleKeyDown}
-								className="w-full bg-transparent border-none outline-none font-mono text-white caret-transparent"
+								className="min-h-11 w-full border-none bg-transparent font-mono text-base text-white caret-[#00FF41] outline-none placeholder:text-green-100/45 md:min-h-0 md:caret-transparent md:placeholder:text-transparent"
 								aria-label="Terminal input"
+								enterKeyHint="go"
+								autoCapitalize="off"
+								placeholder="Type a command"
+								autoCorrect="off"
 								autoComplete="off"
 								spellCheck="false"
-								style={{caretColor: "transparent"}}
 							/>
 							{/* Custom blinking cursor */}
 							<motion.span
@@ -1322,7 +1303,8 @@ export default function Terminal({onClose}: Props) {
 									duration: 1.2,
 									ease: "easeInOut",
 								}}
-								className="absolute text-[#00FF41] pointer-events-none"
+								aria-hidden="true"
+								className="pointer-events-none absolute hidden text-[#00FF41] md:inline"
 								style={{
 									left: `${input.length * 0.6}em`,
 									top: "50%",
@@ -1334,473 +1316,159 @@ export default function Terminal({onClose}: Props) {
 						</div>
 						<button
 							type="button"
+							aria-label="Autocomplete command"
+							title="Tab"
+							onMouseDown={event => event.preventDefault()}
 							onClick={() => handleTabAutocomplete(input)}
-							className="text-[#00FF41] border border-[#00FF41]/40 px-2 py-1 rounded hover:bg-[#00FF41]/10 block md:hidden"
+							className="grid size-11 shrink-0 place-items-center rounded border border-[#00FF41]/40 text-[#00FF41] hover:bg-[#00FF41]/10 md:hidden"
 						>
-							⭾
+							<TabKeyIcon className="h-5 w-5" />
 						</button>
 					</form>
 				</div>
 				{/* Desktop Command Buttons - Only visible on desktop */}
 				<nav className="hidden md:flex mt-4 flex-wrap justify-center gap-2">
-					<Button
-						variant="outline"
-						size="sm"
+					<TerminalShortcutButton
 						onClick={() => {
 							handleSubmit(
 								{preventDefault: () => {}} as React.FormEvent,
 								"blog ls"
 							);
 						}}
-						// className="text-xs bg-black/50 hover:bg-black/70 text-white border-white/30"
-						className="relative text-xs bg-gradient-to-br from-[#1a2e1a]/80 via-black/70 to-[#0f1f0f]/80 hover:from-[#16213e]/90 hover:via-black/80 hover:to-[#1a2e1a]/90 text-white/90 hover:text-white border border-green-400/20 hover:border-[#00FF41]/50 px-5 py-2.5 rounded-md font-mono transition-all duration-300 hover:text-[#00FF41] group shadow-lg hover:shadow-xl hover:shadow-[#00FF41]/15 backdrop-blur-sm overflow-hidden"
 					>
 						<Code className="h-3 w-3 mr-1" />
 						Blogs
-					</Button>
-					<Button
-						variant="outline"
-						size="sm"
+					</TerminalShortcutButton>
+					<TerminalShortcutButton
 						onClick={() => {
 							handleSubmit(
 								{preventDefault: () => {}} as React.FormEvent,
 								"about"
 							);
 						}}
-						// className="text-xs bg-black/50 hover:bg-black/70 text-white border-white/30"
-						className="relative text-xs bg-gradient-to-br from-[#1a2e1a]/80 via-black/70 to-[#0f1f0f]/80 hover:from-[#16213e]/90 hover:via-black/80 hover:to-[#1a2e1a]/90 text-white/90 hover:text-white border border-green-400/20 hover:border-[#00FF41]/50 px-5 py-2.5 rounded-md font-mono transition-all duration-300 hover:text-[#00FF41] group shadow-lg hover:shadow-xl hover:shadow-[#00FF41]/15 backdrop-blur-sm overflow-hidden"
 					>
 						<User className="h-3 w-3 mr-1" />
 						About
-					</Button>
-					<Button
-						variant="outline"
-						size="sm"
+					</TerminalShortcutButton>
+					<TerminalShortcutButton
 						onClick={() => {
 							handleSubmit(
 								{preventDefault: () => {}} as React.FormEvent,
 								"education"
 							);
 						}}
-						// className="text-xs bg-black/50 hover:bg-black/70 text-white border-white/30"
-						className="relative text-xs bg-gradient-to-br from-[#1a2e1a]/80 via-black/70 to-[#0f1f0f]/80 hover:from-[#16213e]/90 hover:via-black/80 hover:to-[#1a2e1a]/90 text-white/90 hover:text-white border border-green-400/20 hover:border-[#00FF41]/50 px-5 py-2.5 rounded-md font-mono transition-all duration-300 hover:text-[#00FF41] group shadow-lg hover:shadow-xl hover:shadow-[#00FF41]/15 backdrop-blur-sm overflow-hidden"
 					>
 						<GraduationCap className="h-3 w-3 mr-1" />
 						Education
-					</Button>
-					<Button
-						variant="outline"
-						size="sm"
+					</TerminalShortcutButton>
+					<TerminalShortcutButton
 						onClick={() => {
 							handleSubmit(
 								{preventDefault: () => {}} as React.FormEvent,
 								"skills"
 							);
 						}}
-						// className="text-xs bg-black/50 hover:bg-black/70 text-white border-white/30"
-						className="relative text-xs bg-gradient-to-br from-[#1a2e1a]/80 via-black/70 to-[#0f1f0f]/80 hover:from-[#16213e]/90 hover:via-black/80 hover:to-[#1a2e1a]/90 text-white/90 hover:text-white border border-green-400/20 hover:border-[#00FF41]/50 px-5 py-2.5 rounded-md font-mono transition-all duration-300 hover:text-[#00FF41] group shadow-lg hover:shadow-xl hover:shadow-[#00FF41]/15 backdrop-blur-sm overflow-hidden"
 					>
 						<Shield className="h-3 w-3 mr-1" />
 						Skills
-					</Button>
-					<Button
-						variant="outline"
-						size="sm"
+					</TerminalShortcutButton>
+					<TerminalShortcutButton
 						onClick={() => {
 							handleSubmit(
 								{preventDefault: () => {}} as React.FormEvent,
 								"experience"
 							);
 						}}
-						// className="text-xs bg-black/50 hover:bg-black/70 text-white border-white/30"
-						className="relative text-xs bg-gradient-to-br from-[#1a2e1a]/80 via-black/70 to-[#0f1f0f]/80 hover:from-[#16213e]/90 hover:via-black/80 hover:to-[#1a2e1a]/90 text-white/90 hover:text-white border border-green-400/20 hover:border-[#00FF41]/50 px-5 py-2.5 rounded-md font-mono transition-all duration-300 hover:text-[#00FF41] group shadow-lg hover:shadow-xl hover:shadow-[#00FF41]/15 backdrop-blur-sm overflow-hidden"
 					>
 						<Briefcase className="h-3 w-3 mr-1" />
 						Experience
-					</Button>
-					<Button
-						variant="outline"
-						size="sm"
+					</TerminalShortcutButton>
+					<TerminalShortcutButton
 						onClick={() => {
 							handleSubmit(
 								{preventDefault: () => {}} as React.FormEvent,
 								"projects"
 							);
 						}}
-						// className="text-xs bg-black/50 hover:bg-black/70 text-white border-white/30"
-						className="relative text-xs bg-gradient-to-br from-[#1a2e1a]/80 via-black/70 to-[#0f1f0f]/80 hover:from-[#16213e]/90 hover:via-black/80 hover:to-[#1a2e1a]/90 text-white/90 hover:text-white border border-green-400/20 hover:border-[#00FF41]/50 px-5 py-2.5 rounded-md font-mono transition-all duration-300 hover:text-[#00FF41] group shadow-lg hover:shadow-xl hover:shadow-[#00FF41]/15 backdrop-blur-sm overflow-hidden"
 					>
 						<Code className="h-3 w-3 mr-1" />
 						Projects
-					</Button>
-					<Button
-						variant="outline"
-						size="sm"
+					</TerminalShortcutButton>
+					<TerminalShortcutButton
 						onClick={() => {
 							handleSubmit(
 								{preventDefault: () => {}} as React.FormEvent,
 								"certifications"
 							);
 						}}
-						// className="text-xs bg-black/50 hover:bg-black/70 text-white border-white/30"
-						className="relative text-xs bg-gradient-to-br from-[#1a2e1a]/80 via-black/70 to-[#0f1f0f]/80 hover:from-[#16213e]/90 hover:via-black/80 hover:to-[#1a2e1a]/90 text-white/90 hover:text-white border border-green-400/20 hover:border-[#00FF41]/50 px-5 py-2.5 rounded-md font-mono transition-all duration-300 hover:text-[#00FF41] group shadow-lg hover:shadow-xl hover:shadow-[#00FF41]/15 backdrop-blur-sm overflow-hidden"
 					>
 						<Award className="h-3 w-3 mr-1" />
 						Certifications
-					</Button>
-					<Button
-						variant="outline"
-						size="sm"
+					</TerminalShortcutButton>
+					<TerminalShortcutButton
 						onClick={() => {
 							handleSubmit(
 								{preventDefault: () => {}} as React.FormEvent,
 								"contact"
 							);
 						}}
-						// className="text-xs bg-black/50 hover:bg-black/70 text-white border-white/30"
-						className="relative text-xs bg-gradient-to-br from-[#1a2e1a]/80 via-black/70 to-[#0f1f0f]/80 hover:from-[#16213e]/90 hover:via-black/80 hover:to-[#1a2e1a]/90 text-white/90 hover:text-white border border-green-400/20 hover:border-[#00FF41]/50 px-5 py-2.5 rounded-md font-mono transition-all duration-300 hover:text-[#00FF41] group shadow-lg hover:shadow-xl hover:shadow-[#00FF41]/15 backdrop-blur-sm overflow-hidden"
 					>
 						<Mail className="h-3 w-3 mr-1" />
 						Contact
-					</Button>
-					<Button
-						variant="outline"
-						size="sm"
+					</TerminalShortcutButton>
+					<TerminalShortcutButton
 						onClick={() => {
 							handleSubmit(
 								{preventDefault: () => {}} as React.FormEvent,
 								"resume"
 							);
 						}}
-						// className="text-xs bg-black/50 hover:bg-black/70 text-white border-white/30"
-						className="relative text-xs bg-gradient-to-br from-[#1a2e1a]/80 via-black/70 to-[#0f1f0f]/80 hover:from-[#16213e]/90 hover:via-black/80 hover:to-[#1a2e1a]/90 text-white/90 hover:text-white border border-green-400/20 hover:border-[#00FF41]/50 px-5 py-2.5 rounded-md font-mono transition-all duration-300 hover:text-[#00FF41] group shadow-lg hover:shadow-xl hover:shadow-[#00FF41]/15 backdrop-blur-sm overflow-hidden"
 					>
 						<FileDown className="h-3 w-3 mr-1" />
 						View Resume
-					</Button>
-					<Button
-						variant="outline"
-						size="sm"
+					</TerminalShortcutButton>
+					<TerminalShortcutButton
 						onClick={() => {
 							handleSubmit(
 								{preventDefault: () => {}} as React.FormEvent,
 								"clear"
 							);
 						}}
-						// className="text-xs bg-black/50 hover:bg-black/70 text-white border-white/30"
-						className="relative text-xs bg-gradient-to-br from-[#1a2e1a]/80 via-black/70 to-[#0f1f0f]/80 hover:from-[#16213e]/90 hover:via-black/80 hover:to-[#1a2e1a]/90 text-white/90 hover:text-white border border-green-400/20 hover:border-[#00FF41]/50 px-5 py-2.5 rounded-md font-mono transition-all duration-300 hover:text-[#00FF41] group shadow-lg hover:shadow-xl hover:shadow-[#00FF41]/15 backdrop-blur-sm overflow-hidden"
 					>
 						<Trash2 className="h-3 w-3 mr-1" />
 						Clear
-					</Button>
+					</TerminalShortcutButton>
 				</nav>
-				{/* Mobile Command Toggle Button - Only visible on mobile */}
-				<div className="block md:hidden mt-4 flex justify-center">
-					<button
-						data-mobile-toggle="true"
-						onClick={() =>
-							setShowMobileCommands(!showMobileCommands)
-						}
-						className="relative text-xs bg-gradient-to-br from-[#1a2e1a]/80 via-black/70 to-[#0f1f0f]/80 hover:from-[#16213e]/90 hover:via-black/80 hover:to-[#1a2e1a]/90 text-white/90 hover:text-white border border-green-400/20 hover:border-[#00FF41]/50 px-5 py-2.5 rounded-md font-mono transition-all duration-300 hover:text-[#00FF41] group shadow-lg hover:shadow-xl hover:shadow-[#00FF41]/15 backdrop-blur-sm overflow-hidden"
-					>
-						<div className="flex items-center space-x-2 relative z-10">
-							{showMobileCommands ? (
-								<>
-									<span className="text-red-400 group-hover:text-red-300">
-										×
-									</span>
-									<span>Hide Commands</span>
-								</>
-							) : (
-								<>
-									<span className="text-green-300/60 group-hover:text-[#00FF41] transition-colors duration-300">
-										⌘
-									</span>
-									<span className="group-hover:text-[#00FF41] transition-colors duration-300">
-										Commands
-									</span>
-								</>
-							)}
-						</div>
-
-						{/* Soft green shimmer effect */}
-						<div className="absolute inset-0 bg-gradient-to-r from-transparent via-green-500/8 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
-					</button>
-				</div>
-				{/* Mobile Command Panel Overlay - Bottom Sheet Style */}
-				<AnimatePresence>
-					{showMobileCommands && (
-						<>
-							{/* Backdrop */}
-							<motion.div
-								initial={{opacity: 0}}
-								animate={{opacity: 1}}
-								exit={{opacity: 0}}
-								transition={{duration: 0.2}}
-								className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden mobile-commands-backdrop"
-								onClick={() => setShowMobileCommands(false)}
-							/>
-
-							{/* Bottom Sheet Command Panel */}
-							<motion.div
-								data-mobile-commands="true"
-								initial={{opacity: 0, y: "100%"}}
-								animate={{opacity: 1, y: 0}}
-								exit={{opacity: 0, y: "100%"}}
-								transition={{
-									duration: 0.3,
-									type: "spring",
-									damping: 25,
-									stiffness: 300,
+				{/* Keep the portal mounted so opening and closing use compositor transitions. */}
+				{typeof document !== "undefined" && createPortal(
+					<>
+						<div
+							aria-hidden="true"
+							data-open={showMobileCommands}
+							className="mobile-commands-backdrop fixed inset-0 z-[60] bg-black/65 md:hidden"
+							onClick={() => setShowMobileCommands(false)}
+						/>
+						<div
+							ref={mobileSheetRef}
+							data-mobile-commands="true"
+							data-open={mobileSheetVisible}
+							aria-hidden={!mobileSheetVisible}
+							id="mobile-command-sheet"
+							role="dialog"
+							aria-labelledby="mobile-commands-title"
+							className="mobile-command-sheet fixed inset-x-0 z-[61] overflow-y-auto overscroll-contain rounded-t-md border-t border-[#00FF41]/30 bg-[#050805] md:hidden"
+						>
+							<MobileCommandsMenu
+								onRun={command => {
+									setShowMobileCommands(false);
+									runCommand(command);
 								}}
-								className="fixed inset-x-0 bottom-0 bg-black/95 border-t border-[#00FF41]/30 rounded-t-3xl shadow-2xl shadow-[#00FF41]/20 z-50 md:hidden max-h-[70vh] overflow-y-auto"
-							>
-								{/* Panel Content */}
-								<div className="p-6 space-y-6 pb-8">
-									{/* Blog Commands */}
-									<div className="mb-4">
-										<h4 className="text-white font-mono text-sm mb-2 border-b border-[#00FF41]/20 pb-1">
-											📝 BLOG SYSTEM
-										</h4>
-										<div className="grid grid-cols-1 gap-2">
-											<button
-												onClick={() => {
-													handleSubmit(
-														{
-															preventDefault:
-																() => {},
-														} as React.FormEvent,
-														"blog ls"
-													);
-													setShowMobileCommands(
-														false
-													);
-												}}
-												className="relative text-xs bg-gradient-to-br from-[#1a2e1a]/80 via-black/70 to-[#0f1f0f]/80 hover:from-[#16213e]/90 hover:via-black/80 hover:to-[#1a2e1a]/90 text-white/90 hover:text-white border border-green-400/20 hover:border-[#00FF41]/50 px-5 py-2.5 rounded-md font-mono transition-all duration-300 hover:text-[#00FF41] group shadow-lg hover:shadow-xl hover:shadow-[#00FF41]/15 backdrop-blur-sm overflow-hidden"
-											>
-												<div className="flex items-center">
-													<Code className="h-3 w-3 mr-2 flex-shrink-0" />
-													<span>blog ls</span>
-												</div>
-												<div className="text-[#00FF41]/60 text-xs ml-5">
-													List all blog posts
-												</div>
-											</button>
-										</div>
-									</div>
-
-									{/* Portfolio Commands */}
-									<div className="mb-4">
-										<h4 className="text-white font-mono text-sm mb-2 border-b border-white/20 pb-1">
-											👤 PORTFOLIO
-										</h4>
-										<div className="grid grid-cols-2 gap-2">
-											<button
-												onClick={() => {
-													handleSubmit(
-														{
-															preventDefault:
-																() => {},
-														} as React.FormEvent,
-														"about"
-													);
-													setShowMobileCommands(
-														false
-													);
-												}}
-												className="relative text-xs bg-gradient-to-br from-[#1a2e1a]/80 via-black/70 to-[#0f1f0f]/80 hover:from-[#16213e]/90 hover:via-black/80 hover:to-[#1a2e1a]/90 text-white/90 hover:text-white border border-green-400/20 hover:border-[#00FF41]/50 px-5 py-2.5 rounded-md font-mono transition-all duration-300 hover:text-[#00FF41] group shadow-lg hover:shadow-xl hover:shadow-[#00FF41]/15 backdrop-blur-sm overflow-hidden"
-											>
-												<User className="h-3 w-3 mr-2 flex-shrink-0" />
-												About
-											</button>
-
-											<button
-												onClick={() => {
-													handleSubmit(
-														{
-															preventDefault:
-																() => {},
-														} as React.FormEvent,
-														"education"
-													);
-													setShowMobileCommands(
-														false
-													);
-												}}
-												className="relative text-xs bg-gradient-to-br from-[#1a2e1a]/80 via-black/70 to-[#0f1f0f]/80 hover:from-[#16213e]/90 hover:via-black/80 hover:to-[#1a2e1a]/90 text-white/90 hover:text-white border border-green-400/20 hover:border-[#00FF41]/50 px-5 py-2.5 rounded-md font-mono transition-all duration-300 hover:text-[#00FF41] group shadow-lg hover:shadow-xl hover:shadow-[#00FF41]/15 backdrop-blur-sm overflow-hidden"
-											>
-												<GraduationCap className="h-3 w-3 mr-2 flex-shrink-0" />
-												Education
-											</button>
-
-											<button
-												onClick={() => {
-													handleSubmit(
-														{
-															preventDefault:
-																() => {},
-														} as React.FormEvent,
-														"skills"
-													);
-													setShowMobileCommands(
-														false
-													);
-												}}
-												className="relative text-xs bg-gradient-to-br from-[#1a2e1a]/80 via-black/70 to-[#0f1f0f]/80 hover:from-[#16213e]/90 hover:via-black/80 hover:to-[#1a2e1a]/90 text-white/90 hover:text-white border border-green-400/20 hover:border-[#00FF41]/50 px-5 py-2.5 rounded-md font-mono transition-all duration-300 hover:text-[#00FF41] group shadow-lg hover:shadow-xl hover:shadow-[#00FF41]/15 backdrop-blur-sm overflow-hidden"
-											>
-												<Shield className="h-3 w-3 mr-2 flex-shrink-0" />
-												Skills
-											</button>
-
-											<button
-												onClick={() => {
-													handleSubmit(
-														{
-															preventDefault:
-																() => {},
-														} as React.FormEvent,
-														"experience"
-													);
-													setShowMobileCommands(
-														false
-													);
-												}}
-												className="relative text-xs bg-gradient-to-br from-[#1a2e1a]/80 via-black/70 to-[#0f1f0f]/80 hover:from-[#16213e]/90 hover:via-black/80 hover:to-[#1a2e1a]/90 text-white/90 hover:text-white border border-green-400/20 hover:border-[#00FF41]/50 px-5 py-2.5 rounded-md font-mono transition-all duration-300 hover:text-[#00FF41] group shadow-lg hover:shadow-xl hover:shadow-[#00FF41]/15 backdrop-blur-sm overflow-hidden"
-											>
-												<Briefcase className="h-3 w-3 mr-2 flex-shrink-0" />
-												Experience
-											</button>
-
-											<button
-												onClick={() => {
-													handleSubmit(
-														{
-															preventDefault:
-																() => {},
-														} as React.FormEvent,
-														"projects"
-													);
-													setShowMobileCommands(
-														false
-													);
-												}}
-												className="relative text-xs bg-gradient-to-br from-[#1a2e1a]/80 via-black/70 to-[#0f1f0f]/80 hover:from-[#16213e]/90 hover:via-black/80 hover:to-[#1a2e1a]/90 text-white/90 hover:text-white border border-green-400/20 hover:border-[#00FF41]/50 px-5 py-2.5 rounded-md font-mono transition-all duration-300 hover:text-[#00FF41] group shadow-lg hover:shadow-xl hover:shadow-[#00FF41]/15 backdrop-blur-sm overflow-hidden"
-											>
-												<Code className="h-3 w-3 mr-2 flex-shrink-0" />
-												Projects
-											</button>
-
-											<button
-												onClick={() => {
-													handleSubmit(
-														{
-															preventDefault:
-																() => {},
-														} as React.FormEvent,
-														"certifications"
-													);
-													setShowMobileCommands(
-														false
-													);
-												}}
-												className="relative text-xs bg-gradient-to-br from-[#1a2e1a]/80 via-black/70 to-[#0f1f0f]/80 hover:from-[#16213e]/90 hover:via-black/80 hover:to-[#1a2e1a]/90 text-white/90 hover:text-white border border-green-400/20 hover:border-[#00FF41]/50 px-5 py-2.5 rounded-md font-mono transition-all duration-300 hover:text-[#00FF41] group shadow-lg hover:shadow-xl hover:shadow-[#00FF41]/15 backdrop-blur-sm overflow-hidden"
-											>
-												<Award className="h-3 w-3 mr-2 flex-shrink-0" />
-												Certifications
-											</button>
-
-											<button
-												onClick={() => {
-													handleSubmit(
-														{
-															preventDefault:
-																() => {},
-														} as React.FormEvent,
-														"contact"
-													);
-													setShowMobileCommands(
-														false
-													);
-												}}
-												className="relative text-xs bg-gradient-to-br from-[#1a2e1a]/80 via-black/70 to-[#0f1f0f]/80 hover:from-[#16213e]/90 hover:via-black/80 hover:to-[#1a2e1a]/90 text-white/90 hover:text-white border border-green-400/20 hover:border-[#00FF41]/50 px-5 py-2.5 rounded-md font-mono transition-all duration-300 hover:text-[#00FF41] group shadow-lg hover:shadow-xl hover:shadow-[#00FF41]/15 backdrop-blur-sm overflow-hidden"
-											>
-												<Mail className="h-3 w-3 mr-2 flex-shrink-0" />
-												Contact
-											</button>
-
-											<button
-												onClick={() => {
-													handleSubmit(
-														{
-															preventDefault:
-																() => {},
-														} as React.FormEvent,
-														"resume"
-													);
-													setShowMobileCommands(
-														false
-													);
-												}}
-												className="relative text-xs bg-gradient-to-br from-[#1a2e1a]/80 via-black/70 to-[#0f1f0f]/80 hover:from-[#16213e]/90 hover:via-black/80 hover:to-[#1a2e1a]/90 text-white/90 hover:text-white border border-green-400/20 hover:border-[#00FF41]/50 px-5 py-2.5 rounded-md font-mono transition-all duration-300 hover:text-[#00FF41] group shadow-lg hover:shadow-xl hover:shadow-[#00FF41]/15 backdrop-blur-sm overflow-hidden"
-											>
-												<FileDown className="h-3 w-3 mr-2 flex-shrink-0" />
-												View Resume
-											</button>
-										</div>
-									</div>
-
-									{/* System Commands */}
-									<div>
-										<h4 className="text-white/70 font-mono text-sm mb-2 border-b border-white/10 pb-1">
-											⚙️ SYSTEM
-										</h4>
-										<div className="grid grid-cols-2 gap-2">
-											<button
-												onClick={() => {
-													handleSubmit(
-														{
-															preventDefault:
-																() => {},
-														} as React.FormEvent,
-														"help"
-													);
-													setShowMobileCommands(
-														false
-													);
-												}}
-												className="relative text-xs bg-gradient-to-br from-[#1a2e1a]/80 via-black/70 to-[#0f1f0f]/80 hover:from-[#16213e]/90 hover:via-black/80 hover:to-[#1a2e1a]/90 text-white/90 hover:text-white border border-green-400/20 hover:border-[#00FF41]/50 px-5 py-2.5 rounded-md font-mono transition-all duration-300 hover:text-[#00FF41] group shadow-lg hover:shadow-xl hover:shadow-[#00FF41]/15 backdrop-blur-sm overflow-hidden"
-											>
-												<span className="mr-2 flex-shrink-0">
-													?
-												</span>
-												Help
-											</button>
-
-											<button
-												onClick={() => {
-													handleSubmit(
-														{
-															preventDefault:
-																() => {},
-														} as React.FormEvent,
-														"clear"
-													);
-													setShowMobileCommands(
-														false
-													);
-												}}
-												className="relative text-xs bg-gradient-to-br from-[#1a2e1a]/80 via-black/70 to-[#0f1f0f]/80 hover:from-[#16213e]/90 hover:via-black/80 hover:to-[#1a2e1a]/90 text-white/90 hover:text-white border border-green-400/20 hover:border-[#00FF41]/50 px-5 py-2.5 rounded-md font-mono transition-all duration-300 hover:text-[#00FF41] group shadow-lg hover:shadow-xl hover:shadow-[#00FF41]/15 backdrop-blur-sm overflow-hidden"
-											>
-												<Trash2 className="h-3 w-3 mr-2 flex-shrink-0" />
-												Clear
-											</button>
-										</div>
-									</div>
-								</div>
-							</motion.div>
-						</>
-					)}
-				</AnimatePresence>
+								onClose={() => setShowMobileCommands(false)}
+							/>
+						</div>
+					</>,
+					document.body
+				)}
 			</motion.div>
 		</AnimatePresence>
 	);

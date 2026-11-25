@@ -21,6 +21,13 @@ export function TypewriterSection({
   const [showContent, setShowContent] = useState(false)
 
   useEffect(() => {
+    if (window.matchMedia("(max-width: 767px)").matches) {
+      setIsInitializing(false)
+      setShowCommand(true)
+      setShowContent(true)
+      return
+    }
+
     // Step 1: Show initializing for 1 second
     const initTimer = setTimeout(() => {
       setIsInitializing(false)
@@ -45,6 +52,12 @@ export function TypewriterSection({
       clearTimeout(completeTimer)
     }
   }, [startDelay, onComplete])
+
+  useEffect(() => {
+    if (!showContent || !onComplete || !window.matchMedia("(max-width: 767px)").matches) return
+    const frame = requestAnimationFrame(onComplete)
+    return () => cancelAnimationFrame(frame)
+  }, [showContent, onComplete])
 
   return (
     <div className="font-mono">
@@ -82,7 +95,7 @@ export function TypewriterSection({
               initial={{ width: 0 }}
               animate={{ width: "auto" }}
               transition={{ duration: 0.6, ease: "easeOut" }}
-              className="overflow-hidden whitespace-nowrap"
+              className="min-w-0 overflow-hidden whitespace-nowrap"
             >
               cat {command}
             </motion.span>
