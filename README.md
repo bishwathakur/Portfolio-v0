@@ -142,3 +142,21 @@ from the creators of Next.js.
 Check out our
 [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying)
 for more details.
+
+## Blog storage
+
+The terminal's blog commands and existing API use SQLite-compatible libSQL. Posts keep their slugs, metadata and raw MDX/Markdown content. Supabase environment variables are no longer read.
+
+- **Laptop preview:** set `BLOG_DATABASE_URL=file:./.local-blog.db` in `.env.local` and start Next.js. The ignored database file persists across restarts. For the editor at `/admin`, also set `BLOG_EDITOR_PASSWORD` and a strong random `JWT_SECRET`; without both, writing is disabled. The editor can create a new post or load and update an existing post by slug.
+- **Vercel later:** set `BLOG_DATABASE_URL` and `BLOG_DATABASE_AUTH_TOKEN` to a hosted libSQL endpoint and token, plus the two editor settings above if writing is needed. Do not use a local file on Vercel. [Turso pricing](https://turso.tech/pricing) and [official TypeScript connection docs](https://docs.turso.tech/sdk/ts/reference) are available; no hosted database is needed for a preview.
+- **No config:** the site builds and the list is empty; individual reads and authorized mutations report that blog storage is unavailable.
+
+### Import posts from an authorized Supabase export
+
+Export the old `blogs` table to a JSON array with `slug`, `title`, `content`, `date`, `read_time`, `tags`, `created_at`, and `updated_at`. Keep exports untracked (the default filename `.local-blog-export.json` is ignored). Put `BLOG_DATABASE_URL` and, for a hosted destination, `BLOG_DATABASE_AUTH_TOKEN` in the current shell environment, then run:
+
+```bash
+npm run blog:import -- .local-blog-export.json
+```
+
+The importer validates the whole export before writing and skips existing slugs instead of overwriting them. Try it on a local file first.

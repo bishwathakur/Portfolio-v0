@@ -42,3 +42,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Local blog storage and exported rows
+/.local-blog.db*
+/.local-blog-export.json

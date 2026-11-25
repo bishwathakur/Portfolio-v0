@@ -1,134 +1,23 @@
-// import { NextResponse } from 'next/server'
-// import fs from 'fs'
-// import path from 'path'
-// import jwt from 'jsonwebtoken'
-
-// export async function POST(request: Request) {
-//   try {
-//     // Check authentication
-//     const authHeader = request.headers.get('authorization')
-//     const token = authHeader?.replace('Bearer ', '')
-//     const jwtSecret = process.env.JWT_SECRET || 'fallback-secret-change-this'
-    
-//     if (!token) {
-//       return NextResponse.json(
-//         { error: 'No authentication token provided' },
-//         { status: 401 }
-//       )
-//     }
-
-//     // Verify JWT token
-//     try {
-//       jwt.verify(token, jwtSecret)
-//     } catch (jwtError) {
-//       return NextResponse.json(
-//         { error: 'Invalid or expired token' },
-//         { status: 401 }
-//       )
-//     }
-
-//     const { slug, data } = await request.json()
-    
-//     // Validate input
-//     if (!slug || !data) {
-//       return NextResponse.json(
-//         { error: 'Missing slug or data' },
-//         { status: 400 }
-//       )
-//     }
-
-//     // Sanitize slug
-//     const sanitizedSlug = slug.replace(/[^a-z0-9-]/gi, '-').toLowerCase()
-    
-//     // Ensure content directory exists
-//     const contentDir = path.join(process.cwd(), 'content')
-//     if (!fs.existsSync(contentDir)) {
-//       fs.mkdirSync(contentDir, { recursive: true })
-//     }
-    
-//     // Write the blog file
-//     const filePath = path.join(contentDir, `${sanitizedSlug}.json`)
-//     fs.writeFileSync(filePath, JSON.stringify(data, null, 2))
-    
-//     return NextResponse.json({ success: true, slug: sanitizedSlug })
-//   } catch (error) {
-//     console.error('Error saving blog:', error)
-//     return NextResponse.json(
-//       { error: 'Failed to save blog' },
-//       { status: 500 }
-//     )
-//   }
-// }
-
 import { NextResponse } from 'next/server'
-import { getSupabase } from '@/app/supabase/supabase'
+import { isBlogEditor } from '@/lib/blog-auth'
+import { blogConfigured, blogSlug, createBlog, parseBlogFields, validBlogSlug } from '@/lib/blog-db'
 
 export async function POST(request: Request) {
+  if (!isBlogEditor(request)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!blogConfigured()) return NextResponse.json({ error: 'Blog service is unavailable' }, { status: 503 })
+  const input = await request.json().catch(() => null)
+  const fields = parseBlogFields(input)
+  if (!fields) return NextResponse.json({ error: 'Valid title, content, and blog metadata are required' }, { status: 400 })
+  const slug = input.slug === undefined || input.slug === '' ? blogSlug(fields.title) : input.slug
+  if (!validBlogSlug(slug)) return NextResponse.json({ error: 'Use a lowercase URL slug with letters, numbers and hyphens' }, { status: 400 })
+
   try {
-    const supabase = getSupabase()
-    if (!supabase) return NextResponse.json({ error: 'Blog service is unavailable' }, { status: 503 })
-
-    // Get token from Authorization header
-    const authHeader = request.headers.get('Authorization')
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    if (!(await createBlog(slug, fields))) {
+      return NextResponse.json({ error: 'A blog with this slug already exists' }, { status: 409 })
     }
-    const accessToken = authHeader.split(' ')[1]
-  
-    // Verify token with Supabase
-    const { data: user } = await supabase.auth.getUser(accessToken)
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-    const body = await request.json()
-    const { title, content, date, readTime, tags } = body
-
-    if (!title || !content) {
-      return NextResponse.json(
-        { error: 'Title and content are required' },
-        { status: 400 }
-      )
-    }
-
-    // Generate slug from title
-    const slug = title
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/(^-|-$)/g, '')
-
-    // Create blog in Supabase
-    const { data, error } = await supabase
-      .from('blogs')
-      .insert({
-        slug,
-        title,
-        content,
-        date: date || new Date().toISOString().split('T')[0],
-        read_time: readTime || '5 min read',
-        tags: tags || []
-      })
-      .select()
-      .single()
-
-    if (error) {
-      if (error.code === '23505') { // Unique constraint violation
-        return NextResponse.json(
-          { error: 'Blog with this title already exists' },
-          { status: 409 }
-        )
-      }
-      throw error
-    }
-
-    return NextResponse.json({ 
-      message: 'Blog created successfully', 
-      slug: data.slug 
-    })
+    return NextResponse.json({ message: 'Blog created successfully', slug })
   } catch (error) {
     console.error('Error creating blog:', error)
-    return NextResponse.json(
-      { error: 'Failed to create blog' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Failed to create blog' }, { status: 500 })
   }
 }

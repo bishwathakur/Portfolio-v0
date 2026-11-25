@@ -1,21 +1,12 @@
-// app/api/blogs/route.ts
 import { NextResponse } from 'next/server'
-import { getSupabase } from '@/app/supabase/supabase'
+import { blogConfigured, listBlogs } from '@/lib/blog-db'
+
+export const dynamic = 'force-dynamic'
 
 export async function GET() {
+  if (!blogConfigured()) return NextResponse.json([])
   try {
-    const supabase = getSupabase()
-    if (!supabase) return NextResponse.json([])
-
-    const { data: blogs, error } = await supabase
-      .from('blogs')
-      .select('slug')
-      .order('created_at', { ascending: false })
-    
-    if (error) throw error
-    
-    const slugs = blogs?.map(blog => blog.slug) || []
-    return NextResponse.json(slugs)
+    return NextResponse.json(await listBlogs())
   } catch (error) {
     console.error('Error fetching blogs:', error)
     return NextResponse.json({ error: 'Failed to fetch blogs' }, { status: 500 })

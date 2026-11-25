@@ -28,6 +28,10 @@ export function BlogEditor() {
   const [newTag, setNewTag] = useState("")
   const [showPreview, setShowPreview] = useState(false)
   const [slug, setSlug] = useState("")
+  const [editingSlug, setEditingSlug] = useState("")
+  const [loadSlug, setLoadSlug] = useState("")
+  const [blogBusy, setBlogBusy] = useState(false)
+  const [blogStatus, setBlogStatus] = useState("")
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
@@ -180,39 +184,63 @@ export function BlogEditor() {
     URL.revokeObjectURL(url)
   }
 
-  const saveToAPI = async () => {
-    const slugToUse = slug || generateSlug()
-    const token = localStorage.getItem('blog-editor-session')
-    
+  const loadBlog = async () => {
+    const requestedSlug = loadSlug.trim()
+    setBlogBusy(true)
+    setBlogStatus("")
     try {
-      const response = await fetch('/api/blogs/create', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          title: blogData.title,
-          content: blogData.content, // Send content directly
-          date: blogData.date,
-          readTime: blogData.readTime,
-          tags: blogData.tags
-        })
-      })
-
-      if (response.ok) {
-        alert('Blog saved successfully!')
-      } else if (response.status === 401) {
-        alert('Session expired. Please log in again.')
-        handleLogout()
-      } else {
-        alert('Error saving blog')
-      }
+      const response = await fetch('/api/blogs/' + encodeURIComponent(requestedSlug), { cache: 'no-store' })
+      const result = await response.json()
+      if (!response.ok) throw new Error(result.error || 'Could not load blog')
+      setBlogData({ ...result.data, content: result.content })
+      setSlug(requestedSlug)
+      setEditingSlug(requestedSlug)
+      setBlogStatus('Loaded ' + requestedSlug)
     } catch (error) {
-      console.error('Error:', error)
-      alert('Error saving blog')
+      setBlogStatus(error instanceof Error ? error.message : 'Could not load blog')
+    } finally {
+      setBlogBusy(false)
     }
   }
+
+  const newBlog = () => {
+    setBlogData({ title: '', content: '', date: new Date().toISOString().slice(0, 10), readTime: '5 min read', tags: [] })
+    setSlug('')
+    setLoadSlug('')
+    setEditingSlug('')
+    setBlogStatus('')
+  }
+
+  const saveToAPI = async () => {
+    setBlogBusy(true)
+    setBlogStatus('')
+    const token = localStorage.getItem('blog-editor-session')
+    try {
+      const response = await fetch(editingSlug ? '/api/blogs/' + encodeURIComponent(editingSlug) : '/api/blogs/create', {
+        method: editingSlug ? 'PUT' : 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({ ...blogData, slug: slug || undefined })
+      })
+      const result = await response.json()
+      if (response.status === 401) {
+        alert('Session expired. Please log in again.')
+        handleLogout()
+        return
+      }
+      if (!response.ok) throw new Error(result.error || 'Could not save blog')
+      const savedSlug = editingSlug || result.slug
+      setSlug(savedSlug)
+      setLoadSlug(savedSlug)
+      setEditingSlug(savedSlug)
+      setBlogStatus('Saved ' + savedSlug)
+    } catch (error) {
+      setBlogStatus(error instanceof Error ? error.message : 'Could not save blog')
+    } finally {
+      setBlogBusy(false)
+    }
+  }
+
+
 
   // BlogPreview component
   const BlogPreview = () => (
@@ -311,7 +339,7 @@ export function BlogEditor() {
             <Download className="h-4 w-4 mr-2" />
             Download JSON
           </Button>
-          <Button onClick={saveToAPI} size="sm">
+          <Button onClick={saveToAPI} disabled={blogBusy} size="sm">
             <Save className="h-4 w-4 mr-2" />
             Save Blog
           </Button>
@@ -320,6 +348,18 @@ export function BlogEditor() {
           </Button>
         </div>
       </div>
+
+      <div className="flex flex-wrap items-center gap-2">
+        <Input className="max-w-xs" aria-label="Existing blog slug" value={loadSlug}
+          onChange={(e) => setLoadSlug(e.target.value)} placeholder="Existing blog slug" />
+        <Button onClick={loadBlog} disabled={blogBusy || !loadSlug.trim()} variant="outline" size="sm">
+          Load existing blog
+        </Button>
+        <Button onClick={newBlog} disabled={blogBusy} variant="outline" size="sm">New blog</Button>
+        <span role="status">{blogStatus}</span>
+      </div>
+
+
 
       {/* Main Content */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -346,7 +386,7 @@ export function BlogEditor() {
               <div>
                 <label className="block text-sm font-medium mb-2">Slug (URL)</label>
                 <Input
-                  value={slug}
+                  value={slug} disabled={Boolean(editingSlug)}
                   onChange={(e) => setSlug(e.target.value)}
                   placeholder={generateSlug() || "auto-generated-from-title"}
                 />

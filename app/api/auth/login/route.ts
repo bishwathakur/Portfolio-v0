@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server'
-import crypto from 'crypto'
 import jwt from 'jsonwebtoken'
 
 export async function POST(request: Request) {
@@ -7,9 +6,9 @@ export async function POST(request: Request) {
     const { password } = await request.json()
     
     const correctPassword = process.env.BLOG_EDITOR_PASSWORD
-    const jwtSecret = process.env.JWT_SECRET!
+    const jwtSecret = process.env.JWT_SECRET
     
-    if (!correctPassword) {
+    if (!correctPassword || !jwtSecret) {
       return NextResponse.json(
         { error: 'Server configuration error' },
         { status: 500 }

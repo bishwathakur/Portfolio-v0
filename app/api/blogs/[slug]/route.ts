@@ -1,82 +1,56 @@
-// app/api/blogs/[slug]/route.ts
-//! MDX one
-// import { NextResponse } from 'next/server';
-// import fs from 'fs';
-// import path from 'path';
-// import matter from 'gray-matter';
-
-// export async function GET(request: Request, { params }: { params: { slug: string } }) {
-//   const filePath = path.join(process.cwd(), 'content', `${params.slug}.mdx`);
-//   if (!fs.existsSync(filePath)) {
-//     return new NextResponse('Not found', { status: 404 });
-//   }
-//   const fileContent = fs.readFileSync(filePath, 'utf8');
-//   const { data, content } = matter(fileContent);
-//   return NextResponse.json({ data, content });
-// }
-
-
-//! JSON one
-// import { NextResponse } from 'next/server'
-// import fs from 'fs'
-// import path from 'path'
-
-// export async function GET(
-//   request: Request,
-//   { params }: { params: { slug: string } }
-// ) {
-//   try {
-//     const { slug } = params
-    
-//     // Read the blog file from the content directory
-//     const filePath = path.join(process.cwd(), 'content', `${slug}.json`)
-//     const fileContent = fs.readFileSync(filePath, 'utf8')
-//     const blogData = JSON.parse(fileContent)
-    
-//     return NextResponse.json(blogData)
-//   } catch (error) {
-//     return NextResponse.json(
-//       { error: 'Blog post not found' },
-//       { status: 404 }
-//     )
-//   }
-// }
-
 import { NextResponse } from 'next/server'
-import { getSupabase } from '@/app/supabase/supabase'
+import { isBlogEditor } from '@/lib/blog-auth'
+import { blogConfigured, deleteBlog, getBlog, parseBlogFields, updateBlog, validBlogSlug } from '@/lib/blog-db'
 
-export async function GET(
-  request: Request,
-  { params }: { params: { slug: string } }
-) {
+type Context = { params: { slug: string } }
+
+const unavailable = () => NextResponse.json({ error: 'Blog service is unavailable' }, { status: 503 })
+const notFound = () => NextResponse.json({ error: 'Blog not found' }, { status: 404 })
+const unauthorized = () => NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+export const dynamic = 'force-dynamic'
+
+export async function GET(_request: Request, { params }: Context) {
+  if (!validBlogSlug(params.slug)) return notFound()
+  if (!blogConfigured()) return unavailable()
+
   try {
-    const supabase = getSupabase()
-    if (!supabase) return NextResponse.json({ error: 'Blog service is unavailable' }, { status: 503 })
-
-    const { data: blog, error } = await supabase
-      .from('blogs')
-      .select('*')
-      .eq('slug', params.slug)
-      .single()
-
-    if (error) {
-      if (error.code === 'PGRST116') {
-        return NextResponse.json({ error: 'Blog not found' }, { status: 404 })
-      }
-      throw error
-    }
-
-    return NextResponse.json({
-      data: {
-        title: blog.title,
-        date: blog.date,
-        readTime: blog.read_time,
-        tags: blog.tags
-      },
-      content: blog.content
-    })
+    const blog = await getBlog(params.slug)
+    if (!blog) return notFound()
+    const { title, date, readTime, tags, content } = blog
+    return NextResponse.json({ data: { title, date, readTime, tags }, content })
   } catch (error) {
     console.error('Error fetching blog:', error)
     return NextResponse.json({ error: 'Failed to fetch blog' }, { status: 500 })
+  }
+}
+
+export async function PUT(request: Request, { params }: Context) {
+  if (!isBlogEditor(request)) return unauthorized()
+  if (!blogConfigured()) return unavailable()
+  if (!validBlogSlug(params.slug)) return notFound()
+  const fields = parseBlogFields(await request.json().catch(() => null))
+  if (!fields) return NextResponse.json({ error: 'Valid title, content, and blog metadata are required' }, { status: 400 })
+
+  try {
+    if (!(await updateBlog(params.slug, fields))) return notFound()
+    return NextResponse.json({ message: 'Blog updated successfully', slug: params.slug })
+  } catch (error) {
+    console.error('Error updating blog:', error)
+    return NextResponse.json({ error: 'Failed to update blog' }, { status: 500 })
+  }
+}
+
+export async function DELETE(request: Request, { params }: Context) {
+  if (!isBlogEditor(request)) return unauthorized()
+  if (!blogConfigured()) return unavailable()
+  if (!validBlogSlug(params.slug)) return notFound()
+
+  try {
+    if (!(await deleteBlog(params.slug))) return notFound()
+    return NextResponse.json({ message: 'Blog deleted successfully', slug: params.slug })
+  } catch (error) {
+    console.error('Error deleting blog:', error)
+    return NextResponse.json({ error: 'Failed to delete blog' }, { status: 500 })
   }
 }
