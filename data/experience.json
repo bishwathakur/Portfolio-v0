@@ -4,9 +4,11 @@
 			"title": "Data Engineer Intern",
 			"company": "Flipkart",
 			"location": "Bengaluru",
-			"period": "May 2026 - Present",
+			"period": "May 2026 - July 2026",
 			"responsibilities":[
-				"Working as DE intern in the **Accounting Engineering team**"
+				"Built a stockout diagnosis engine on StarRocks (analytics) and NebulaGraph (traversal), cutting analysis time by 99%.",
+				"Designed a FastAPI service where an LLM maps questions to a fixed metric vocabulary and deterministic code compiles SQL, preventing hallucinated queries.",
+				"Researched and prototyped Kafka, Flink, and Node.js pipelines to evaluate designs before production migration."
 			]
 		},
 		{
