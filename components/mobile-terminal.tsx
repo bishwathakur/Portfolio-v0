@@ -20,7 +20,7 @@ function CommandLink({command, onRun, showPrompt = false}: {
 			type="button"
 			data-command={command}
 			onClick={() => onRun(command)}
-			className="inline-flex min-h-11 min-w-0 items-center gap-2 whitespace-nowrap rounded-none px-1 text-left text-[#00FF41] underline-offset-4 hover:underline active:bg-[#00FF41]/10 focus-visible:outline focus-visible:outline-1 focus-visible:outline-[#00FF41]"
+			className="terminal-mobile-key inline-flex min-h-11 min-w-0 items-center gap-2 whitespace-nowrap px-2.5 text-left text-[#00FF41]"
 		>
 			{showPrompt && <span aria-hidden="true" className="text-[#00FF41]/65">$</span>}
 			<code>{command}</code>
@@ -41,7 +41,7 @@ export function MobileTerminalWelcome({onRun}: {onRun: (command: string) => void
 				<span aria-hidden="true" className="text-green-50">$</span>
 				<code>ls</code>
 			</div>
-			<div className="-ml-1 flex flex-wrap gap-x-3" role="group" aria-label="Quick commands">
+			<div className="my-1.5 flex flex-wrap gap-2" role="group" aria-label="Quick commands">
 				{shortcuts.map(command => <CommandLink key={command} command={command} onRun={onRun} />)}
 			</div>
 			<p className="text-xs leading-5 text-green-50/65">Tap a command or type one below.</p>
@@ -75,7 +75,7 @@ export function DesktopTerminalWelcome() {
 export function TerminalDirectory({onRun}: {onRun: (command: string) => void}) {
 	return (
 		<>
-			<div data-mobile-directory className="-ml-1 flex flex-wrap gap-x-3 md:hidden" role="group" aria-label="Portfolio commands">
+			<div data-mobile-directory className="my-1.5 flex flex-wrap gap-2 md:hidden" role="group" aria-label="Portfolio commands">
 				{portfolioItems.map(command => <CommandLink key={command} command={command} onRun={onRun} />)}
 			</div>
 			<div data-desktop-directory className="hidden text-[#00FF41] md:block">
@@ -107,7 +107,7 @@ export function MobileCommandsMenu({onRun, onClose}: {
 			{commandGroups.map(group => (
 				<section key={group.label} className="mt-3">
 					<h3 className="text-xs font-normal text-green-50/65"># {group.label}</h3>
-					<div className="grid grid-cols-2 gap-x-2 divide-transparent">
+					<div className="mt-1.5 grid grid-cols-2 gap-2">
 						{group.items.map(command => <CommandLink key={command} command={command} onRun={onRun} showPrompt />)}
 					</div>
 				</section>
