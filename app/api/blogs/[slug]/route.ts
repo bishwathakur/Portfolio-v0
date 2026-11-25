@@ -43,13 +43,16 @@
 // }
 
 import { NextResponse } from 'next/server'
-import { supabase } from '@/app/supabase/supabase'
+import { getSupabase } from '@/app/supabase/supabase'
 
 export async function GET(
   request: Request,
   { params }: { params: { slug: string } }
 ) {
   try {
+    const supabase = getSupabase()
+    if (!supabase) return NextResponse.json({ error: 'Blog service is unavailable' }, { status: 503 })
+
     const { data: blog, error } = await supabase
       .from('blogs')
       .select('*')

@@ -1,9 +1,12 @@
 // app/api/blogs/route.ts
 import { NextResponse } from 'next/server'
-import { supabase } from '@/app/supabase/supabase'
+import { getSupabase } from '@/app/supabase/supabase'
 
 export async function GET() {
   try {
+    const supabase = getSupabase()
+    if (!supabase) return NextResponse.json([])
+
     const { data: blogs, error } = await supabase
       .from('blogs')
       .select('slug')

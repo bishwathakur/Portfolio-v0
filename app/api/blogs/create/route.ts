@@ -61,10 +61,13 @@
 // }
 
 import { NextResponse } from 'next/server'
-import { supabase } from '@/app/supabase/supabase'
+import { getSupabase } from '@/app/supabase/supabase'
 
 export async function POST(request: Request) {
   try {
+    const supabase = getSupabase()
+    if (!supabase) return NextResponse.json({ error: 'Blog service is unavailable' }, { status: 503 })
+
     // Get token from Authorization header
     const authHeader = request.headers.get('Authorization')
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
