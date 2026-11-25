@@ -57,35 +57,17 @@ export default function Terminal({onClose}: Props) {
 	}, []);
 
 	useEffect(() => {
-		// Focus input on mount and when clicking anywhere in the terminal
-		inputRef.current?.focus();
-
-		const handleClick = (e: MouseEvent) => {
-			const target = e.target as Element;
-			const isMobile = window.innerWidth < 768;
-
-			// Check if clicking on mobile command elements
-			const isMobileCommandPanel =
-				target.closest("[data-mobile-commands]") ||
-				target.classList.contains("mobile-commands-backdrop") ||
-				target.closest("[data-mobile-toggle]");
-
-			// Don't focus input if:
-			// 1. On mobile and commands panel is open, OR
-			// 2. Clicking on mobile command related elements
-			if ((isMobile && showMobileCommands) || isMobileCommandPanel) {
-				return;
-			}
-
-			inputRef.current?.focus();
+		const desktopInput = window.matchMedia(
+			"(min-width: 768px) and (hover: hover) and (pointer: fine)"
+		);
+		const focusDesktopInput = () => {
+			if (desktopInput.matches) inputRef.current?.focus();
 		};
 
-		document.addEventListener("click", handleClick);
-
-		return () => {
-			document.removeEventListener("click", handleClick);
-		};
-	}, [showMobileCommands]);
+		focusDesktopInput();
+		document.addEventListener("click", focusDesktopInput);
+		return () => document.removeEventListener("click", focusDesktopInput);
+	}, []);
 
 	useEffect(() => {
 
