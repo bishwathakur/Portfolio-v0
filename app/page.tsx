@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import Terminal from "@/components/terminal"
 import BootSequence from "@/components/boot-sequence"
 import { CRTToggle } from "@/components/crt-toggle"
@@ -11,6 +11,30 @@ import { motion, AnimatePresence } from "framer-motion"
 export default function Home() {
   const [booting, setBooting] = useState(true)
   const [showTerminal, setShowTerminal] = useState(false)
+  const windowRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!showTerminal) return
+    const container = windowRef.current
+    const viewport = window.visualViewport
+    if (!container || !viewport) return
+
+    // The layout viewport can stay full height while the phone keyboard is up.
+    const updateHeight = () => {
+      if (viewport.scale === 1) {
+        container.style.setProperty("--terminal-viewport-height", String(viewport.height) + "px")
+      } else {
+        container.style.removeProperty("--terminal-viewport-height")
+      }
+    }
+
+    updateHeight()
+    viewport.addEventListener("resize", updateHeight)
+    return () => {
+      viewport.removeEventListener("resize", updateHeight)
+      container.style.removeProperty("--terminal-viewport-height")
+    }
+  }, [showTerminal])
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -21,7 +45,7 @@ export default function Home() {
   }, [])
 
   return (
-		<main className="min-h-screen bg-white relative overflow-hidden dark:bg-gray-950">
+		<main className="portfolio-screen relative overflow-hidden bg-white dark:bg-gray-950">
 			{/* Background Image */}
 			<div
 				className="fixed inset-0 bg-cover bg-center bg-no-repeat z-0"
@@ -40,7 +64,7 @@ export default function Home() {
 				<CRTToggle />
 			</div>
 
-			<div className="container mx-auto px-4 py-8 h-screen flex flex-col relative z-10">
+			<div ref={windowRef} className="portfolio-window container relative z-10 mx-auto flex flex-col px-2 pb-2 pt-14 md:px-4 md:py-8">
 				<AnimatePresence mode="wait">
 					{booting ? (
 						<BootSequence key="boot" />
@@ -53,7 +77,7 @@ export default function Home() {
 									animate={{scale: 1, opacity: 1}}
 									exit={{scale: 0.9, opacity: 0}}
 									transition={{duration: 0.2}}
-									className="h-full"
+									className="h-full min-h-0 min-w-0"
 								>
 									<Terminal
 										onClose={() => setShowTerminal(false)}
