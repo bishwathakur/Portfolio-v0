@@ -1242,7 +1242,7 @@ export default function Terminal({onClose}: Props) {
 							aria-expanded={showMobileCommands}
 							aria-controls={showMobileCommands ? "mobile-command-sheet" : undefined}
 							onClick={toggleMobileCommands}
-							className="inline-flex min-h-11 items-center gap-1.5 whitespace-nowrap px-2.5 font-mono text-xs text-[#00FF41] focus-visible:outline focus-visible:outline-1 focus-visible:outline-[#00FF41] md:hidden"
+							className="terminal-mobile-key inline-flex min-h-11 items-center gap-1.5 whitespace-nowrap px-2.5 font-mono text-xs text-[#00FF41] md:hidden"
 						>
 							<span aria-hidden="true">⌘</span>
 							Commands
