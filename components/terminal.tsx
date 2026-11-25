@@ -48,7 +48,9 @@ export default function Terminal({onClose}: Props) {
 	const [isVisible, setIsVisible] = useState(true);
 	const [availableBlogSlugs, setAvailableBlogSlugs] = useState<string[]>([]);
 	const [showMobileCommands, setShowMobileCommands] = useState(false);
-	const [mobileSheetStyle, setMobileSheetStyle] = useState<React.CSSProperties>({});
+	const [mobileSheetReady, setMobileSheetReady] = useState(false);
+	const mobileSheetRef = useRef<HTMLDivElement>(null);
+	const mobileSheetVisible = showMobileCommands && mobileSheetReady;
 	const inputRef = useRef<HTMLInputElement>(null);
 	const terminalRef = useRef<HTMLDivElement>(null);
 
@@ -75,31 +77,56 @@ export default function Terminal({onClose}: Props) {
 	useEffect(() => {
 		if (!showMobileCommands) return;
 		const viewport = window.visualViewport;
-		if (!viewport) return;
+		const sheet = mobileSheetRef.current;
+		if (!viewport || !sheet) return;
 
+		let frame = 0;
+		let settle = 0;
+		const reveal = () => setMobileSheetReady(true);
 		const updatePosition = () => {
-			setMobileSheetStyle({
-				bottom: Math.max(0, window.innerHeight - viewport.height - viewport.offsetTop),
-				maxHeight: viewport.height * 0.7,
-			});
+			const bottom = Math.max(0, window.innerHeight - viewport.height - viewport.offsetTop);
+			sheet.style.setProperty("--sheet-bottom", Math.round(bottom) + "px");
+			sheet.style.setProperty("--sheet-height", Math.floor(viewport.height * 0.7) + "px");
+			window.clearTimeout(settle);
+			if (bottom <= 24) {
+				reveal();
+			} else {
+				// Start the slide after keyboard dismissal stops moving the viewport.
+				settle = window.setTimeout(reveal, 90);
+			}
+		};
+		const scheduleUpdate = () => {
+			window.cancelAnimationFrame(frame);
+			frame = window.requestAnimationFrame(updatePosition);
 		};
 
 		updatePosition();
-		viewport.addEventListener("resize", updatePosition);
-		viewport.addEventListener("scroll", updatePosition);
-		window.addEventListener("resize", updatePosition);
+		const deadline = window.setTimeout(reveal, 380);
+		viewport.addEventListener("resize", scheduleUpdate);
+		viewport.addEventListener("scroll", scheduleUpdate);
+		window.addEventListener("resize", scheduleUpdate);
 		return () => {
-			viewport.removeEventListener("resize", updatePosition);
-			viewport.removeEventListener("scroll", updatePosition);
-			window.removeEventListener("resize", updatePosition);
+			window.cancelAnimationFrame(frame);
+			window.clearTimeout(settle);
+			window.clearTimeout(deadline);
+			viewport.removeEventListener("resize", scheduleUpdate);
+			viewport.removeEventListener("scroll", scheduleUpdate);
+			window.removeEventListener("resize", scheduleUpdate);
 		};
 	}, [showMobileCommands]);
+
+	useEffect(() => {
+		if (mobileSheetRef.current) mobileSheetRef.current.inert = !mobileSheetVisible;
+	}, [mobileSheetVisible]);
 
 	const toggleMobileCommands = () => {
 		if (showMobileCommands) {
 			setShowMobileCommands(false);
 			return;
 		}
+		const viewport = window.visualViewport;
+		const bottom = viewport ? window.innerHeight - viewport.height - viewport.offsetTop : 0;
+		setMobileSheetReady(bottom < 80);
 		inputRef.current?.blur();
 		setShowMobileCommands(true);
 	};
@@ -1528,283 +1555,267 @@ export default function Terminal({onClose}: Props) {
 						Clear
 					</Button>
 				</nav>
-				{/* Mobile Command Panel Overlay - Bottom Sheet Style */}
+				{/* Keep the portal mounted so opening and closing use compositor transitions. */}
 				{typeof document !== "undefined" && createPortal(
-<AnimatePresence>
-					{showMobileCommands && (
-						<>
-							{/* Backdrop */}
-							<motion.div
-								initial={{opacity: 0}}
-								animate={{opacity: 1}}
-								exit={{opacity: 0}}
-								transition={{duration: 0.2}}
-								className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden mobile-commands-backdrop"
-								onClick={() => setShowMobileCommands(false)}
-							/>
-
-							{/* Bottom Sheet Command Panel */}
-							<motion.div
-								data-mobile-commands="true"
-								id="mobile-command-sheet"
-								style={mobileSheetStyle}
-								initial={{opacity: 0, y: "100%"}}
-								animate={{opacity: 1, y: 0}}
-								exit={{opacity: 0, y: "100%"}}
-								transition={{
-									duration: 0.3,
-									type: "spring",
-									damping: 25,
-									stiffness: 300,
-								}}
-								className="fixed inset-x-0 bottom-0 bg-black/95 border-t border-[#00FF41]/30 rounded-t-3xl shadow-2xl shadow-[#00FF41]/20 z-50 md:hidden max-h-[70vh] overflow-y-auto overscroll-contain"
-							>
-								{/* Panel Content */}
-								<div className="p-6 space-y-6 pb-8">
-									{/* Blog Commands */}
-									<div className="mb-4">
-										<h4 className="text-white font-mono text-sm mb-2 border-b border-[#00FF41]/20 pb-1">
-											📝 BLOG SYSTEM
-										</h4>
-										<div className="grid grid-cols-1 gap-2">
-											<button
-												onClick={() => {
-													handleSubmit(
-														{
-															preventDefault:
-																() => {},
-														} as React.FormEvent,
-														"blog ls"
-													);
-													setShowMobileCommands(
-														false
-													);
-												}}
-												className="relative text-xs bg-gradient-to-br from-[#1a2e1a]/80 via-black/70 to-[#0f1f0f]/80 hover:from-[#16213e]/90 hover:via-black/80 hover:to-[#1a2e1a]/90 text-white/90 hover:text-white border border-green-400/20 hover:border-[#00FF41]/50 px-5 py-2.5 rounded-md font-mono transition-all duration-300 hover:text-[#00FF41] group shadow-lg hover:shadow-xl hover:shadow-[#00FF41]/15 backdrop-blur-sm overflow-hidden"
-											>
-												<div className="flex items-center">
-													<Code className="h-3 w-3 mr-2 flex-shrink-0" />
-													<span>blog ls</span>
-												</div>
-												<div className="text-[#00FF41]/60 text-xs ml-5">
-													List all blog posts
-												</div>
-											</button>
+					<>
+						<div
+							aria-hidden="true"
+							data-open={showMobileCommands}
+							className="mobile-commands-backdrop fixed inset-0 z-[60] bg-black/65 md:hidden"
+							onClick={() => setShowMobileCommands(false)}
+						/>
+						<div
+							ref={mobileSheetRef}
+							data-mobile-commands="true"
+							data-open={mobileSheetVisible}
+							aria-hidden={!mobileSheetVisible}
+							id="mobile-command-sheet"
+							className="mobile-command-sheet fixed inset-x-0 z-[61] overflow-y-auto overscroll-contain rounded-t-3xl border-t border-[#00FF41]/30 bg-[#080d08] md:hidden"
+						>
+						{/* Panel Content */}
+						<div className="p-6 space-y-6 pb-8">
+							{/* Blog Commands */}
+							<div className="mb-4">
+								<h4 className="text-white font-mono text-sm mb-2 border-b border-[#00FF41]/20 pb-1">
+									📝 BLOG SYSTEM
+								</h4>
+								<div className="grid grid-cols-1 gap-2">
+									<button
+										onClick={() => {
+											handleSubmit(
+												{
+													preventDefault:
+														() => {},
+												} as React.FormEvent,
+												"blog ls"
+											);
+											setShowMobileCommands(
+												false
+											);
+										}}
+										className="relative text-xs bg-gradient-to-br from-[#1a2e1a]/80 via-black/70 to-[#0f1f0f]/80 hover:from-[#16213e]/90 hover:via-black/80 hover:to-[#1a2e1a]/90 text-white/90 hover:text-white border border-green-400/20 hover:border-[#00FF41]/50 px-5 py-2.5 rounded-md font-mono transition-all duration-300 hover:text-[#00FF41] group shadow-lg hover:shadow-xl hover:shadow-[#00FF41]/15 overflow-hidden"
+									>
+										<div className="flex items-center">
+											<Code className="h-3 w-3 mr-2 flex-shrink-0" />
+											<span>blog ls</span>
 										</div>
-									</div>
-
-									{/* Portfolio Commands */}
-									<div className="mb-4">
-										<h4 className="text-white font-mono text-sm mb-2 border-b border-white/20 pb-1">
-											👤 PORTFOLIO
-										</h4>
-										<div className="grid grid-cols-2 gap-2">
-											<button
-												onClick={() => {
-													handleSubmit(
-														{
-															preventDefault:
-																() => {},
-														} as React.FormEvent,
-														"about"
-													);
-													setShowMobileCommands(
-														false
-													);
-												}}
-												className="relative text-xs bg-gradient-to-br from-[#1a2e1a]/80 via-black/70 to-[#0f1f0f]/80 hover:from-[#16213e]/90 hover:via-black/80 hover:to-[#1a2e1a]/90 text-white/90 hover:text-white border border-green-400/20 hover:border-[#00FF41]/50 px-5 py-2.5 rounded-md font-mono transition-all duration-300 hover:text-[#00FF41] group shadow-lg hover:shadow-xl hover:shadow-[#00FF41]/15 backdrop-blur-sm overflow-hidden"
-											>
-												<User className="h-3 w-3 mr-2 flex-shrink-0" />
-												About
-											</button>
-
-											<button
-												onClick={() => {
-													handleSubmit(
-														{
-															preventDefault:
-																() => {},
-														} as React.FormEvent,
-														"education"
-													);
-													setShowMobileCommands(
-														false
-													);
-												}}
-												className="relative text-xs bg-gradient-to-br from-[#1a2e1a]/80 via-black/70 to-[#0f1f0f]/80 hover:from-[#16213e]/90 hover:via-black/80 hover:to-[#1a2e1a]/90 text-white/90 hover:text-white border border-green-400/20 hover:border-[#00FF41]/50 px-5 py-2.5 rounded-md font-mono transition-all duration-300 hover:text-[#00FF41] group shadow-lg hover:shadow-xl hover:shadow-[#00FF41]/15 backdrop-blur-sm overflow-hidden"
-											>
-												<GraduationCap className="h-3 w-3 mr-2 flex-shrink-0" />
-												Education
-											</button>
-
-											<button
-												onClick={() => {
-													handleSubmit(
-														{
-															preventDefault:
-																() => {},
-														} as React.FormEvent,
-														"skills"
-													);
-													setShowMobileCommands(
-														false
-													);
-												}}
-												className="relative text-xs bg-gradient-to-br from-[#1a2e1a]/80 via-black/70 to-[#0f1f0f]/80 hover:from-[#16213e]/90 hover:via-black/80 hover:to-[#1a2e1a]/90 text-white/90 hover:text-white border border-green-400/20 hover:border-[#00FF41]/50 px-5 py-2.5 rounded-md font-mono transition-all duration-300 hover:text-[#00FF41] group shadow-lg hover:shadow-xl hover:shadow-[#00FF41]/15 backdrop-blur-sm overflow-hidden"
-											>
-												<Shield className="h-3 w-3 mr-2 flex-shrink-0" />
-												Skills
-											</button>
-
-											<button
-												onClick={() => {
-													handleSubmit(
-														{
-															preventDefault:
-																() => {},
-														} as React.FormEvent,
-														"experience"
-													);
-													setShowMobileCommands(
-														false
-													);
-												}}
-												className="relative text-xs bg-gradient-to-br from-[#1a2e1a]/80 via-black/70 to-[#0f1f0f]/80 hover:from-[#16213e]/90 hover:via-black/80 hover:to-[#1a2e1a]/90 text-white/90 hover:text-white border border-green-400/20 hover:border-[#00FF41]/50 px-5 py-2.5 rounded-md font-mono transition-all duration-300 hover:text-[#00FF41] group shadow-lg hover:shadow-xl hover:shadow-[#00FF41]/15 backdrop-blur-sm overflow-hidden"
-											>
-												<Briefcase className="h-3 w-3 mr-2 flex-shrink-0" />
-												Experience
-											</button>
-
-											<button
-												onClick={() => {
-													handleSubmit(
-														{
-															preventDefault:
-																() => {},
-														} as React.FormEvent,
-														"projects"
-													);
-													setShowMobileCommands(
-														false
-													);
-												}}
-												className="relative text-xs bg-gradient-to-br from-[#1a2e1a]/80 via-black/70 to-[#0f1f0f]/80 hover:from-[#16213e]/90 hover:via-black/80 hover:to-[#1a2e1a]/90 text-white/90 hover:text-white border border-green-400/20 hover:border-[#00FF41]/50 px-5 py-2.5 rounded-md font-mono transition-all duration-300 hover:text-[#00FF41] group shadow-lg hover:shadow-xl hover:shadow-[#00FF41]/15 backdrop-blur-sm overflow-hidden"
-											>
-												<Code className="h-3 w-3 mr-2 flex-shrink-0" />
-												Projects
-											</button>
-
-											<button
-												onClick={() => {
-													handleSubmit(
-														{
-															preventDefault:
-																() => {},
-														} as React.FormEvent,
-														"certifications"
-													);
-													setShowMobileCommands(
-														false
-													);
-												}}
-												className="relative text-xs bg-gradient-to-br from-[#1a2e1a]/80 via-black/70 to-[#0f1f0f]/80 hover:from-[#16213e]/90 hover:via-black/80 hover:to-[#1a2e1a]/90 text-white/90 hover:text-white border border-green-400/20 hover:border-[#00FF41]/50 px-5 py-2.5 rounded-md font-mono transition-all duration-300 hover:text-[#00FF41] group shadow-lg hover:shadow-xl hover:shadow-[#00FF41]/15 backdrop-blur-sm overflow-hidden"
-											>
-												<Award className="h-3 w-3 mr-2 flex-shrink-0" />
-												Certifications
-											</button>
-
-											<button
-												onClick={() => {
-													handleSubmit(
-														{
-															preventDefault:
-																() => {},
-														} as React.FormEvent,
-														"contact"
-													);
-													setShowMobileCommands(
-														false
-													);
-												}}
-												className="relative text-xs bg-gradient-to-br from-[#1a2e1a]/80 via-black/70 to-[#0f1f0f]/80 hover:from-[#16213e]/90 hover:via-black/80 hover:to-[#1a2e1a]/90 text-white/90 hover:text-white border border-green-400/20 hover:border-[#00FF41]/50 px-5 py-2.5 rounded-md font-mono transition-all duration-300 hover:text-[#00FF41] group shadow-lg hover:shadow-xl hover:shadow-[#00FF41]/15 backdrop-blur-sm overflow-hidden"
-											>
-												<Mail className="h-3 w-3 mr-2 flex-shrink-0" />
-												Contact
-											</button>
-
-											<button
-												onClick={() => {
-													handleSubmit(
-														{
-															preventDefault:
-																() => {},
-														} as React.FormEvent,
-														"resume"
-													);
-													setShowMobileCommands(
-														false
-													);
-												}}
-												className="relative text-xs bg-gradient-to-br from-[#1a2e1a]/80 via-black/70 to-[#0f1f0f]/80 hover:from-[#16213e]/90 hover:via-black/80 hover:to-[#1a2e1a]/90 text-white/90 hover:text-white border border-green-400/20 hover:border-[#00FF41]/50 px-5 py-2.5 rounded-md font-mono transition-all duration-300 hover:text-[#00FF41] group shadow-lg hover:shadow-xl hover:shadow-[#00FF41]/15 backdrop-blur-sm overflow-hidden"
-											>
-												<FileDown className="h-3 w-3 mr-2 flex-shrink-0" />
-												View Resume
-											</button>
+										<div className="text-[#00FF41]/60 text-xs ml-5">
+											List all blog posts
 										</div>
-									</div>
-
-									{/* System Commands */}
-									<div>
-										<h4 className="text-white/70 font-mono text-sm mb-2 border-b border-white/10 pb-1">
-											⚙️ SYSTEM
-										</h4>
-										<div className="grid grid-cols-2 gap-2">
-											<button
-												onClick={() => {
-													handleSubmit(
-														{
-															preventDefault:
-																() => {},
-														} as React.FormEvent,
-														"help"
-													);
-													setShowMobileCommands(
-														false
-													);
-												}}
-												className="relative text-xs bg-gradient-to-br from-[#1a2e1a]/80 via-black/70 to-[#0f1f0f]/80 hover:from-[#16213e]/90 hover:via-black/80 hover:to-[#1a2e1a]/90 text-white/90 hover:text-white border border-green-400/20 hover:border-[#00FF41]/50 px-5 py-2.5 rounded-md font-mono transition-all duration-300 hover:text-[#00FF41] group shadow-lg hover:shadow-xl hover:shadow-[#00FF41]/15 backdrop-blur-sm overflow-hidden"
-											>
-												<span className="mr-2 flex-shrink-0">
-													?
-												</span>
-												Help
-											</button>
-
-											<button
-												onClick={() => {
-													handleSubmit(
-														{
-															preventDefault:
-																() => {},
-														} as React.FormEvent,
-														"clear"
-													);
-													setShowMobileCommands(
-														false
-													);
-												}}
-												className="relative text-xs bg-gradient-to-br from-[#1a2e1a]/80 via-black/70 to-[#0f1f0f]/80 hover:from-[#16213e]/90 hover:via-black/80 hover:to-[#1a2e1a]/90 text-white/90 hover:text-white border border-green-400/20 hover:border-[#00FF41]/50 px-5 py-2.5 rounded-md font-mono transition-all duration-300 hover:text-[#00FF41] group shadow-lg hover:shadow-xl hover:shadow-[#00FF41]/15 backdrop-blur-sm overflow-hidden"
-											>
-												<Trash2 className="h-3 w-3 mr-2 flex-shrink-0" />
-												Clear
-											</button>
-										</div>
-									</div>
+									</button>
 								</div>
-							</motion.div>
-						</>
-					)}
-				</AnimatePresence>,
+							</div>
+
+							{/* Portfolio Commands */}
+							<div className="mb-4">
+								<h4 className="text-white font-mono text-sm mb-2 border-b border-white/20 pb-1">
+									👤 PORTFOLIO
+								</h4>
+								<div className="grid grid-cols-2 gap-2">
+									<button
+										onClick={() => {
+											handleSubmit(
+												{
+													preventDefault:
+														() => {},
+												} as React.FormEvent,
+												"about"
+											);
+											setShowMobileCommands(
+												false
+											);
+										}}
+										className="relative text-xs bg-gradient-to-br from-[#1a2e1a]/80 via-black/70 to-[#0f1f0f]/80 hover:from-[#16213e]/90 hover:via-black/80 hover:to-[#1a2e1a]/90 text-white/90 hover:text-white border border-green-400/20 hover:border-[#00FF41]/50 px-5 py-2.5 rounded-md font-mono transition-all duration-300 hover:text-[#00FF41] group shadow-lg hover:shadow-xl hover:shadow-[#00FF41]/15 overflow-hidden"
+									>
+										<User className="h-3 w-3 mr-2 flex-shrink-0" />
+										About
+									</button>
+
+									<button
+										onClick={() => {
+											handleSubmit(
+												{
+													preventDefault:
+														() => {},
+												} as React.FormEvent,
+												"education"
+											);
+											setShowMobileCommands(
+												false
+											);
+										}}
+										className="relative text-xs bg-gradient-to-br from-[#1a2e1a]/80 via-black/70 to-[#0f1f0f]/80 hover:from-[#16213e]/90 hover:via-black/80 hover:to-[#1a2e1a]/90 text-white/90 hover:text-white border border-green-400/20 hover:border-[#00FF41]/50 px-5 py-2.5 rounded-md font-mono transition-all duration-300 hover:text-[#00FF41] group shadow-lg hover:shadow-xl hover:shadow-[#00FF41]/15 overflow-hidden"
+									>
+										<GraduationCap className="h-3 w-3 mr-2 flex-shrink-0" />
+										Education
+									</button>
+
+									<button
+										onClick={() => {
+											handleSubmit(
+												{
+													preventDefault:
+														() => {},
+												} as React.FormEvent,
+												"skills"
+											);
+											setShowMobileCommands(
+												false
+											);
+										}}
+										className="relative text-xs bg-gradient-to-br from-[#1a2e1a]/80 via-black/70 to-[#0f1f0f]/80 hover:from-[#16213e]/90 hover:via-black/80 hover:to-[#1a2e1a]/90 text-white/90 hover:text-white border border-green-400/20 hover:border-[#00FF41]/50 px-5 py-2.5 rounded-md font-mono transition-all duration-300 hover:text-[#00FF41] group shadow-lg hover:shadow-xl hover:shadow-[#00FF41]/15 overflow-hidden"
+									>
+										<Shield className="h-3 w-3 mr-2 flex-shrink-0" />
+										Skills
+									</button>
+
+									<button
+										onClick={() => {
+											handleSubmit(
+												{
+													preventDefault:
+														() => {},
+												} as React.FormEvent,
+												"experience"
+											);
+											setShowMobileCommands(
+												false
+											);
+										}}
+										className="relative text-xs bg-gradient-to-br from-[#1a2e1a]/80 via-black/70 to-[#0f1f0f]/80 hover:from-[#16213e]/90 hover:via-black/80 hover:to-[#1a2e1a]/90 text-white/90 hover:text-white border border-green-400/20 hover:border-[#00FF41]/50 px-5 py-2.5 rounded-md font-mono transition-all duration-300 hover:text-[#00FF41] group shadow-lg hover:shadow-xl hover:shadow-[#00FF41]/15 overflow-hidden"
+									>
+										<Briefcase className="h-3 w-3 mr-2 flex-shrink-0" />
+										Experience
+									</button>
+
+									<button
+										onClick={() => {
+											handleSubmit(
+												{
+													preventDefault:
+														() => {},
+												} as React.FormEvent,
+												"projects"
+											);
+											setShowMobileCommands(
+												false
+											);
+										}}
+										className="relative text-xs bg-gradient-to-br from-[#1a2e1a]/80 via-black/70 to-[#0f1f0f]/80 hover:from-[#16213e]/90 hover:via-black/80 hover:to-[#1a2e1a]/90 text-white/90 hover:text-white border border-green-400/20 hover:border-[#00FF41]/50 px-5 py-2.5 rounded-md font-mono transition-all duration-300 hover:text-[#00FF41] group shadow-lg hover:shadow-xl hover:shadow-[#00FF41]/15 overflow-hidden"
+									>
+										<Code className="h-3 w-3 mr-2 flex-shrink-0" />
+										Projects
+									</button>
+
+									<button
+										onClick={() => {
+											handleSubmit(
+												{
+													preventDefault:
+														() => {},
+												} as React.FormEvent,
+												"certifications"
+											);
+											setShowMobileCommands(
+												false
+											);
+										}}
+										className="relative text-xs bg-gradient-to-br from-[#1a2e1a]/80 via-black/70 to-[#0f1f0f]/80 hover:from-[#16213e]/90 hover:via-black/80 hover:to-[#1a2e1a]/90 text-white/90 hover:text-white border border-green-400/20 hover:border-[#00FF41]/50 px-5 py-2.5 rounded-md font-mono transition-all duration-300 hover:text-[#00FF41] group shadow-lg hover:shadow-xl hover:shadow-[#00FF41]/15 overflow-hidden"
+									>
+										<Award className="h-3 w-3 mr-2 flex-shrink-0" />
+										Certifications
+									</button>
+
+									<button
+										onClick={() => {
+											handleSubmit(
+												{
+													preventDefault:
+														() => {},
+												} as React.FormEvent,
+												"contact"
+											);
+											setShowMobileCommands(
+												false
+											);
+										}}
+										className="relative text-xs bg-gradient-to-br from-[#1a2e1a]/80 via-black/70 to-[#0f1f0f]/80 hover:from-[#16213e]/90 hover:via-black/80 hover:to-[#1a2e1a]/90 text-white/90 hover:text-white border border-green-400/20 hover:border-[#00FF41]/50 px-5 py-2.5 rounded-md font-mono transition-all duration-300 hover:text-[#00FF41] group shadow-lg hover:shadow-xl hover:shadow-[#00FF41]/15 overflow-hidden"
+									>
+										<Mail className="h-3 w-3 mr-2 flex-shrink-0" />
+										Contact
+									</button>
+
+									<button
+										onClick={() => {
+											handleSubmit(
+												{
+													preventDefault:
+														() => {},
+												} as React.FormEvent,
+												"resume"
+											);
+											setShowMobileCommands(
+												false
+											);
+										}}
+										className="relative text-xs bg-gradient-to-br from-[#1a2e1a]/80 via-black/70 to-[#0f1f0f]/80 hover:from-[#16213e]/90 hover:via-black/80 hover:to-[#1a2e1a]/90 text-white/90 hover:text-white border border-green-400/20 hover:border-[#00FF41]/50 px-5 py-2.5 rounded-md font-mono transition-all duration-300 hover:text-[#00FF41] group shadow-lg hover:shadow-xl hover:shadow-[#00FF41]/15 overflow-hidden"
+									>
+										<FileDown className="h-3 w-3 mr-2 flex-shrink-0" />
+										View Resume
+									</button>
+								</div>
+							</div>
+
+							{/* System Commands */}
+							<div>
+								<h4 className="text-white/70 font-mono text-sm mb-2 border-b border-white/10 pb-1">
+									⚙️ SYSTEM
+								</h4>
+								<div className="grid grid-cols-2 gap-2">
+									<button
+										onClick={() => {
+											handleSubmit(
+												{
+													preventDefault:
+														() => {},
+												} as React.FormEvent,
+												"help"
+											);
+											setShowMobileCommands(
+												false
+											);
+										}}
+										className="relative text-xs bg-gradient-to-br from-[#1a2e1a]/80 via-black/70 to-[#0f1f0f]/80 hover:from-[#16213e]/90 hover:via-black/80 hover:to-[#1a2e1a]/90 text-white/90 hover:text-white border border-green-400/20 hover:border-[#00FF41]/50 px-5 py-2.5 rounded-md font-mono transition-all duration-300 hover:text-[#00FF41] group shadow-lg hover:shadow-xl hover:shadow-[#00FF41]/15 overflow-hidden"
+									>
+										<span className="mr-2 flex-shrink-0">
+											?
+										</span>
+										Help
+									</button>
+
+									<button
+										onClick={() => {
+											handleSubmit(
+												{
+													preventDefault:
+														() => {},
+												} as React.FormEvent,
+												"clear"
+											);
+											setShowMobileCommands(
+												false
+											);
+										}}
+										className="relative text-xs bg-gradient-to-br from-[#1a2e1a]/80 via-black/70 to-[#0f1f0f]/80 hover:from-[#16213e]/90 hover:via-black/80 hover:to-[#1a2e1a]/90 text-white/90 hover:text-white border border-green-400/20 hover:border-[#00FF41]/50 px-5 py-2.5 rounded-md font-mono transition-all duration-300 hover:text-[#00FF41] group shadow-lg hover:shadow-xl hover:shadow-[#00FF41]/15 overflow-hidden"
+									>
+										<Trash2 className="h-3 w-3 mr-2 flex-shrink-0" />
+										Clear
+									</button>
+								</div>
+							</div>
+						</div>
+						</div>
+					</>,
 					document.body
 				)}
 			</motion.div>
