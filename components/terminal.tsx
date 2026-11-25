@@ -1242,7 +1242,7 @@ export default function Terminal({onClose}: Props) {
 							aria-expanded={showMobileCommands}
 							aria-controls={showMobileCommands ? "mobile-command-sheet" : undefined}
 							onClick={toggleMobileCommands}
-							className="inline-flex min-h-11 items-center gap-1.5 whitespace-nowrap rounded border border-[#00FF41]/40 bg-[#00FF41]/10 px-2.5 font-mono text-xs text-[#00FF41] md:hidden"
+							className="inline-flex min-h-11 items-center gap-1.5 whitespace-nowrap px-2.5 font-mono text-xs text-[#00FF41] focus-visible:outline focus-visible:outline-1 focus-visible:outline-[#00FF41] md:hidden"
 						>
 							<span aria-hidden="true">⌘</span>
 							Commands
@@ -1264,7 +1264,7 @@ export default function Terminal({onClose}: Props) {
 				>
 					{commandHistory.map((cmd, index) => (
 						<div key={index} data-terminal-entry={cmd.input} className="mb-4">
-							<div className="flex items-start text-white/70">
+							<div className={cmd.input === "welcome" ? "hidden items-start text-white/70 md:flex" : "flex items-start text-white/70"}>
 								<span className="mr-2 shrink-0 text-white">$</span>
 								<span className="min-w-0">{cmd.input}</span>
 							</div>
@@ -1495,7 +1495,7 @@ export default function Terminal({onClose}: Props) {
 							id="mobile-command-sheet"
 							role="dialog"
 							aria-labelledby="mobile-commands-title"
-							className="mobile-command-sheet fixed inset-x-0 z-[61] overflow-y-auto overscroll-contain rounded-t-3xl border-t border-[#00FF41]/30 bg-[#080d08] md:hidden"
+							className="mobile-command-sheet fixed inset-x-0 z-[61] overflow-y-auto overscroll-contain rounded-t-md border-t border-[#00FF41]/30 bg-[#050805] md:hidden"
 						>
 							<MobileCommandsMenu
 								onRun={command => {
